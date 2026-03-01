@@ -24,6 +24,10 @@ AI Coding Agent 的記憶是**短暫的** — 每次新對話都從零開始。
 │  Layer 3: 對話摘要索引 (Conversation Digest)      │
 │  → 自動掃描過去的對話記錄                           │
 │  → 索引至 LanceDB 供語義檢索                       │
+├─────────────────────────────────────────────────┤
+│  Layer 4: 雲端原生語義記憶 (Cloud Semantic)       │
+│  → Google Drive / OneDrive 深度整合             │
+│  → LlamaIndex + Rclone 高速索引優化               │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -204,7 +208,30 @@ alias sys-ask="python /path/to/project/scripts/query.py"
 
 ---
 
-## 六、工作流整合（/start 與 /end）
+## 六、Layer 4：雲端原生語義記憶 (G-Drive / OneDrive)
+
+針對大規模的研究資料，本地儲存往往不足。將雲端空間整合為主要的知識來源：
+
+#### 1. 優化策略：Rclone + LlamaIndex
+- **Rclone**：用於極速的檔案列表與基礎操作。
+- **LlamaIndex**：業界標準的雲端內容語義讀取 (RAG) 引擎。
+- **私有 API**：引導使用者建立專屬 GCP Client ID，繞過公共配額限制。
+
+#### 2. 實作範例 `scripts/llama_drive_indexer.py`
+```python
+from llama_index.readers.google import GoogleDriveReader
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
+def sync_cloud():
+    # 使用私有憑證確保高效能
+    loader = GoogleDriveReader(client_secrets_path="config/google_drive_credentials.json")
+    documents = loader.load_data(folder_id="您的根目錄ID")
+    # 同步至 LanceDB (Layer 2)
+```
+
+#### 3. AI 操作準則
+- 在雲端建立專屬的 `AI_Workspace` 資料夾，作為 AI 處理資料的緩衝區。
+- 自動產生 `optimized_inventory.md` 清單並回傳至雲端，方便使用者隨時掌握雲端資產。
 
 #### `/start` 工作流 — 新對話啟動
 

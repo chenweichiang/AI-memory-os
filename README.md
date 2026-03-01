@@ -22,6 +22,10 @@ AI Coding Agents have "short-term memory"—each new conversation starts from sc
 │  Layer 3: Conversation Digest Index              │
 │  → Automatically scans past conversation logs    │
 │  → Indexed into LanceDB for semantic search      │
+├─────────────────────────────────────────────────┤
+│  Layer 4: Cloud-Native Semantic Memory           │
+│  → Google Drive / OneDrive Integration           │
+│  → LlamaIndex + Rclone for high-speed indexing   │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -202,7 +206,31 @@ Build a script to automatically scan the conversation logs directory of your AI 
 
 ---
 
-## VI. Workflow Integration (/start and /end)
+## VI. Layer 4: Cloud-Native Semantic Memory (G-Drive / OneDrive)
+
+For large-scale research data, local storage is insufficient. Integrate cloud storage providers as a primary knowledge source:
+
+#### 1. Optimization Strategy: Rclone + LlamaIndex
+- **Rclone**: Used for lighting-fast file listing and management.
+- **LlamaIndex**: Used for industry-standard semantic ingestion (RAG) of cloud content.
+- **Custom API**: Use a private Google Cloud Client ID/Secret to avoid shared rate limits.
+
+#### 2. Implementation Sample `scripts/llama_drive_indexer.py`
+```python
+from llama_index.readers.google import GoogleDriveReader
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
+def sync_cloud():
+    # Use private credentials for high performance
+    loader = GoogleDriveReader(client_secrets_path="config/google_drive_credentials.json")
+    documents = loader.load_data(folder_id="YOUR_ROOT_FOLDER_ID")
+    # Index into LanceDB (Layer 2)
+    # ... indexing logic ...
+```
+
+#### 3. Rules for AI
+- Always create a dedicated `AI_Workspace` folder on the cloud for AI-generated data.
+- Generate a markdown inventory (`optimized_inventory.md`) and upload it back to the cloud for easy user review.
 
 #### `/start` Workflow — New Conversation Initialization
 
