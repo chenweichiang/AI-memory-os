@@ -5,11 +5,11 @@
 ## 一、核心問題
 
 AI Coding Agent 的記憶是**短暫的** — 每次新對話都從零開始。
-本框架透過三層機制，讓 AI「回想起」過去的所有關鍵決策與工作成果。
+本框架透過四層機制，讓 AI「回想起」過去的所有關鍵決策與工作成果。
 
 ---
 
-## 二、三層記憶架構
+## 二、四層記憶架構
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -80,7 +80,7 @@ AI Coding Agent 的記憶是**短暫的** — 每次新對話都從零開始。
 在此基礎上，加入本框架的**記憶專屬區塊**：
 
 ```markdown
-## Memory system           ← 三層記憶架構說明
+## Memory system           ← 四層記憶架構說明
 ## 變更紀錄 (Success Log)   ← AI 每次更新的工作日誌
 ## 技術決策紀錄 (Decision Log) ← 結構化決策表格
 ## 待辦事項 (Roadmap)       ← 任務追蹤
@@ -233,38 +233,36 @@ def sync_cloud():
 - 在雲端建立專屬的 `AI_Workspace` 資料夾，作為 AI 處理資料的緩衝區。
 - 自動產生 `optimized_inventory.md` 清單並回傳至雲端，方便使用者隨時掌握雲端資產。
 
-#### `/start` 工作流 — 新對話啟動
+#### `/start` 工作流 — 新對話啟動與全域感知 (Context Retrieval)
 
 建立 `.agents/workflows/start.md`：
 
 ```markdown
 ---
-description: 初始化專案記憶
+description: 初始化專案記憶與全域感知
 ---
-1. 讀取 AGENTS.md（Success Log, Decision Log, Roadmap）
-2. 多維度語義檢索 LanceDB：
-   - 系統現況與待辦事項
-   - 最近的對話摘要
-   - 使用者偏好與指示
-3. 檢查 git status 確認未提交變更
-4. 向使用者回報記憶摘要
+1. 讀取 AGENTS.md（包含 Success Log, Decision Log, Roadmap）
+2. 多維度語義檢索 LanceDB 提取歷史習慣 (Habits) 與過往經驗。
+3. 檢查 git status 確認未提交變更。
+4. 將「歷史習慣」與使用者的「當下意圖」結合，決定是否需要進入 Planning 模式，或是直接開始 Execution。向使用者回報準備狀態。
 ```
 
-#### `/end` 工作流 — 對話結束保存
+#### `/end` 工作流 — 對話結束保存與經驗收斂 (Evidence Logging)
 
 建立 `.agents/workflows/end.md`：
 
 ```markdown
 ---
-description: 對話結束記憶保存
+description: 對話結束記憶保存與經驗收斂
 ---
-1. 更新 AGENTS.md：
-   - Success Log 新增本次完成的工作
-   - Decision Log 新增技術決策（如有）
-   - Roadmap 更新完成狀態
-2. 執行對話摘要索引（conversation_digest.py）
-3. Git commit + push（觸發 pre-push hook 更新 LanceDB 主索引）
-4. 向使用者確認記憶已保存
+1. 進行自我反思 (Self-Reflection)：盤點本次任務中是否創造了新解法或經歷了除錯過程。
+2. 更新 AGENTS.md：
+   - 將新知與解法濃縮寫入 Decision Log (形成永久習慣)。
+   - Success Log 新增本次完成的工作。
+   - Roadmap 更新完成狀態。
+3. 執行對話摘要索引（conversation_digest.py）。
+4. Git commit + push（觸發 pre-push hook 即時更新 LanceDB 向量庫）。
+5. 向使用者確認記憶已持久化。
 ```
 
 ---
@@ -282,28 +280,45 @@ echo "✅ 知識庫已更新"
 
 ---
 
-## 八、記憶生命週期總覽
+## 八、動態代理工作流與記憶生命週期 (Dynamic Agentic Workflow)
 
-```
-使用者輸入 /start
+本框架不只提供靜態記憶，更定義了 AI 代理 (Agent) 應遵循的**動態決策型 (Dynamic Reasoning)** 工作流。AI 應避免死板的單向執行，並自主判斷何時規劃、執行、除錯與記憶，遵循以下四階段閉環：
+
+### 1. Phase 1: 啟動與全域感知 (Context Retrieval)
+- **觸發時機**：使用者輸入 `/start` 或給予新專案任務時。
+- **動作**：AI 自動讀取 `AGENTS.md` (守則與習慣)，並透過 `sys-ask` 檢索 LanceDB 提取過往經驗。
+- **目標**：用使用者的「歷史習慣 (Habits)」搭配「當下意圖 (Intent)」作為執行的最高準則，不盲目猜測。
+
+### 2. Phase 2: 動態推論 (Dynamic Planning)
+- **觸發時機**：AI 充分理解上下文後。
+- **動作**：由 AI 評估任務難度。
+  - **低難度**：直接切換至執行模式修改程式碼，不硬性要求產出計畫書。
+  - **高難度**：強制進入規劃模式，產出防禦性計畫。若缺乏關鍵配置或權限，AI 需主動暫停並要求使用者提供指示。
+
+### 3. Phase 3: 閉環執行與自我修復 (Self-Healing Execution)
+- **觸發時機**：進入工具操作階段 (修改檔案、Terminal 執行)。
+- **動作**：AI 在寫碼或下達指令後，**必須主動觸發驗證 (Verification)**，如檢視 log、執行 curl。
+- **自我修復 (Self-Healing)**：若遇報錯 (黃燈)，AI 需自主讀取 Log、微調後重試，不立刻打擾使用者。僅在連續失敗或不可逆的致命錯誤 (紅燈) 出現時，才中斷迴圈向使用者求援。
+
+### 4. Phase 4: 經驗收斂與記憶持久化 (Evidence Logging)
+- **觸發時機**：任務結束或使用者輸入 `/end`。
+- **動作**：AI 將本回覆中自創的新解法、除錯血淚史等「經驗」，濃縮成文字寫回 `AGENTS.md` (Decision Log)。
+- **自動化**：執行 Git Push，觸發 `pre-push` hook 呼叫 `ingest.py`，將最新經驗刻入 LanceDB。
+
+### 工作流總覽圖示
+
+```text
+使用者輸入 /start (或新指令)
     ↓
-AI 讀取 AGENTS.md（結構化記憶）
+[Phase 1] 讀取 AGENTS.md + 檢索 LanceDB (喚醒習慣與上下文)
     ↓
-AI 查詢 LanceDB（語義記憶 + 對話摘要）
+[Phase 2] 動態推論任務難度 (簡單直上 / 複雜需計畫防呆)
     ↓
-AI「回想起」歷史脈絡，開始工作
+[Phase 3] 執行工具 (工具呼叫 ↔ 自動驗證與自我修復 閉環)
     ↓
-對話過程（完整記憶）
+[Phase 4] 經驗收斂 (將新解法寫入 AGENTS.md)
     ↓
-使用者輸入 /end
-    ↓
-AI 更新 AGENTS.md（寫入新記憶）
-    ↓
-AI 執行 conversation_digest（索引對話摘要）
-    ↓
-Git push（觸發 pre-push hook → ingest.py → LanceDB 更新）
-    ↓
-記憶持久化完成 ✅
+使用者輸入 /end + Git push (觸發 LanceDB 永續寫入) ✅
 ```
 
 ---

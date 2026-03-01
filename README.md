@@ -3,11 +3,11 @@
 ---
 
 ## I. The Core Problem
-AI Coding Agents have "short-term memory"—each new conversation starts from scratch. This framework uses a three-layer mechanism to let the AI "recall" all past key decisions and work results.
+AI Coding Agents have "short-term memory"—each new conversation starts from scratch. This framework uses a four-layer mechanism to let the AI "recall" all past key decisions and work results.
 
 ---
 
-## II. Three-Layer Memory Architecture
+## II. Four-Layer Memory Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -78,7 +78,7 @@ When creating `AGENTS.md`, it is recommended to follow the standard format with 
 On this foundation, add the **memory-specific sections** of this framework:
 
 ```markdown
-## Memory system           ← Explanation of the three-layer architecture
+## Memory system           ← Explanation of the four-layer architecture
 ## Success Log             ← Work log updated by AI per session
 ## Decision Log            ← Structured decision table
 ## Roadmap                 ← Task tracking
@@ -232,38 +232,36 @@ def sync_cloud():
 - Always create a dedicated `AI_Workspace` folder on the cloud for AI-generated data.
 - Generate a markdown inventory (`optimized_inventory.md`) and upload it back to the cloud for easy user review.
 
-#### `/start` Workflow — New Conversation Initialization
+#### `/start` Workflow — Context Retrieval & Initialization
 
 Create `.agents/workflows/start.md`:
 
 ```markdown
 ---
-description: Initialize project memory
+description: Initialize project memory and context retrieval
 ---
-1. Read AGENTS.md (Success Log, Decision Log, Roadmap)
-2. Perform multi-dimensional semantic search in LanceDB:
-   - Current system status and to-dos
-   - Recent conversation summaries
-   - User preferences and instructions
-3. Check `git status` for uncommitted changes
-4. Report memory summary to the user
+1. Read AGENTS.md (Success Log, Decision Log, Roadmap).
+2. Perform multi-dimensional semantic search in LanceDB to extract Historical Habits and past experiences.
+3. Check `git status` for uncommitted changes.
+4. Combine "Historical Habits" with the user's "Current Intent" to autonomously decide whether to enter PLANNING mode or transition directly to EXECUTION. Report readiness to the user.
 ```
 
-#### `/end` Workflow — Conversation Persistence
+#### `/end` Workflow — Evidence Logging & Persistence
 
 Create `.agents/workflows/end.md`:
 
 ```markdown
 ---
-description: Conversation end memory persistence
+description: Conversation end memory persistence and evidence logging
 ---
-1. Update AGENTS.md:
-   - Add current work to Success Log
-   - Add tech decisions to Decision Log (if any)
-   - Update Roadmap status
-2. Execute conversation digest indexing (conversation_digest.py)
-3. Git commit + push (triggers pre-push hook to update LanceDB main index)
-4. Confirm memory persistence to the user
+1. Self-Reflection: Review if any new solutions were invented or significant bugs were resolved during this session.
+2. Update AGENTS.md:
+   - Condense new knowledge and solutions into the Decision Log (forming permanent habits).
+   - Add current work to the Success Log.
+   - Update Roadmap status.
+3. Execute conversation digest indexing (conversation_digest.py).
+4. Git commit + push (triggers pre-push hook to permanently update LanceDB vector store).
+5. Confirm memory persistence to the user.
 ```
 
 ---
@@ -281,28 +279,45 @@ echo "✅ Knowledge base updated"
 
 ---
 
-## VIII. Memory Lifecycle Overview
+## VIII. Dynamic Agentic Workflow & Memory Lifecycle
 
-```
-User inputs /start
+This framework provides not only static memory but also defines a **Dynamic Reasoning** workflow that AI Agents must follow. The AI should avoid rigid, one-way execution pipelines and autonomously determine when to plan, execute, debug, and memorize, following this four-phase closed loop:
+
+### 1. Phase 1: Context Retrieval & Initialization
+- **Trigger**: When the user inputs `/start` or assigns a new project task.
+- **Action**: The AI automatically reads `AGENTS.md` (rules and habits) and uses `sys-ask` to query LanceDB for past experiences.
+- **Goal**: Combine the user's "Historical Habits" with their "Current Intent" as the highest execution guideline, eliminating blind guesswork.
+
+### 2. Phase 2: Dynamic Planning
+- **Trigger**: After the AI fully comprehends the context.
+- **Action**: The AI evaluates the task's complexity autonomously.
+  - **Low Complexity (Routine)**: Seamlessly transitions to execution to modify code, without strictly requiring a written plan.
+  - **High Complexity / High Risk**: Forces a transition to PLANNING mode to write a defensive implementation plan. If crucial configurations or access rights are missing, the AI must actively pause and request instructions from the user.
+
+### 3. Phase 3: Self-Healing Execution Loop
+- **Trigger**: Entering the tool operation phase (file modifications, terminal executions).
+- **Action**: After writing code or issuing commands, the AI **must actively trigger Verification**, such as checking logs or running `curl` tests.
+- **Self-Healing**: If an error (Yellow Light) is encountered, the AI must autonomously read the Log, make adjustments, and retry without immediately disturbing the user. The loop is only aborted to ask the user for help when encountering consecutive failures or an irreversible fatal error (Red Light).
+
+### 4. Phase 4: Evidence Logging & Memory Persistence
+- **Trigger**: Task completion or user inputting `/end`.
+- **Action**: The AI condenses newly invented solutions, critical bugs faced, and hard-earned experiences into text, writing it back to the `AGENTS.md` Decision Log.
+- **Automation**: Executing Git Push triggers the `pre-push` hook to call `ingest.py`, permanently etching the latest experience into LanceDB.
+
+### Workflow Overview Diagram
+
+```text
+User inputs /start (or new task)
     ↓
-AI reads AGENTS.md (Structured Memory)
+[Phase 1] Read AGENTS.md + Search LanceDB (Awaken Habits & Context)
     ↓
-AI queries LanceDB (Semantic Memory + Conversation Digests)
+[Phase 2] Dynamic Inference of Complexity (Direct Exec / Require Plan)
     ↓
-AI "recalls" historical context and starts work
+[Phase 3] Execution Loop (Tool Calling ↔ Auto-Verify & Self-Heal)
     ↓
-Conversation process (Full Memory)
+[Phase 4] Evidence Logging (Write newfound solutions to AGENTS.md)
     ↓
-User inputs /end
-    ↓
-AI updates AGENTS.md (Writes new memory)
-    ↓
-AI runs conversation_digest (Indexes conversation summary)
-    ↓
-Git push (triggers pre-push hook → ingest.py → LanceDB update)
-    ↓
-Memory persistence complete ✅
+User inputs /end + Git push (Trigger permanent LanceDB write) ✅
 ```
 
 ---
