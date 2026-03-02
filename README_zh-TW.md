@@ -449,20 +449,20 @@ echo "✅ 知識庫已更新"
 
 ### 1. Static Layer: 靜態程式碼稽核 (Linting)
 - **工具**：`ShellCheck` (Shell), `Ruff` (Python)。
-- **目標**：在代碼執行前攔截語法錯誤、不安全變數引用與風格偏差。
+- **核心價值**：在代碼執行前攔截語法錯誤、不安全變數引用與風格偏差。AI 在 commit 前必須確保 `make lint` 通過。
 
-### 2. Logic Layer: 腳本邏輯單元測試 (Unit Testing)
+### 2. Logic Layer: 腳本邏輯單元測試 (Unit & Functional Testing)
 - **工具**：`Bats-core` (Shell), `Pytest` (Python)。
-- **實作**：針對核心維護腳本 (如 `watchdog.sh`) 撰寫 Mock 測試，驗證邊界條件下（如網路斷線、磁碟滿載）的邏輯收斂性。
+- **測試驅動自我修復 (Test-Driven Self-Healing)**：當 AI 修改核心邏輯時，應遵循「測試先行 (Test-First)」或隨附測試。若驗證失敗，AI 應將測試報錯作為 Context 進行自我修正，而非人眼盲測。
+- **實作**：針對核心腳本 (如 `ingest.py`, `wiki_sync.py`) 撰寫單元測試。
 
-### 3. State Layer: 伺服器最終狀態驗證 (Integration/State)
+### 3. State Layer: 實體狀態與環境驗證 (Integration & Environment State)
 - **工具**：`Testinfra` (Pytest 擴充)。
-- **核心價值**：跨越「代碼正確」與「環境正確」的鴻溝。
+- **核心價值**：確保「部署之後的伺服器」處於正確狀態。
 - **驗證項目**：
-    - 遠端目錄權限與 UID/GID (如 `uploads` 應歸屬特定容器用戶)。
-    - Docker 容器 Healthcheck 狀態。
-    - 系統服務埠 (Ports) 監聽狀態。
-    - 磁碟空間與系統負載。
+    - **權限稽核 (Permission Audit)**：驗證目錄 UID/GID 與權限是否符合安全規範。
+    - **服務可用性 (Service Health)**：驗證 Docker 容器 Healthcheck 與監聽埠 (Ports) 狀態。
+    - **憑證有效性 (Credential Check)**：驗證 API 憑證檔案是否存在且具備正確權限位元。
 
 ## 十三、通用記憶 OS (Unified Memory API)
 
