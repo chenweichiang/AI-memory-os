@@ -84,6 +84,7 @@ This framework provides not only static memory but also defines a **Dynamic Reas
   - **Immediate Output Audit**: Regardless of the exit code, analyze stdout/stderr immediately. Actively search for keywords like `Error`, `Warning`, `Failed`, `Missing`, or `Not found` to confirm the actual outcome.
   - **Post-Execution Verification**: Immediately inspect the target state. For files, use `ls` or `view_file`; for services, use `docker ps` or check Healthchecks.
   - **Omission Audit**: After major operations, proactively audit against original requirements to ensure no "orphan files" or missed parameter adjustments.
+- **Platform Compatibility & Syntax Audit**: Before introducing platform-specific tags (e.g., MediaWiki's `<syntaxhighlight>`) or relying on extensions, the AI **must** first verify if the target environment supports them. If unsupported, revert to standard compatible syntax (e.g., `<pre>`) or find alternatives. Never blindly produce invalid syntax.
 - **Tool Adjustment & Pivot**: Upon introducing a new tool or script, test it on a minimal scope (Dry-run) first. If version incompatibilities or outdated APIs are discovered, the AI should autonomously search for the latest documentation to adapt. If the adaptation cost is deemed too high, the AI must decisively abandon the tool and pivot to viable alternatives without falling into a rabbit hole.
 - **Self-Healing & Escalation**: If an error (Yellow Light) is encountered, the AI must autonomously read the Log, make adjustments (e.g., using `uv` to install a missing dependency), and retry without immediately disturbing the user. The loop is only aborted to ask the user for help (with a concise Error Log summary) when encountering 3 consecutive failures or an irreversible fatal error (Red Light).
 
@@ -105,6 +106,7 @@ To complement the "Self-Healing mechanisms" and "Verification loops" mentioned a
   - Environment Initialization: `uv init` / `uv venv`
   - Install packages: `uv pip install <package>` (instead of `pip install`)
   - Run scripts: `uv run <script.py>` (automatically uses the virtual environment, no `source` needed)
+- **macOS Stability Note**: In macOS environments, to avoid SSL certificate verification failures when sending Python `requests`, the AI should proactively integrate `certifi` and reset `ssl._create_default_https_context` in maintenance scripts.
 
 ### 2. Automated Testing Verification: `pytest`
 - **Why use it**: Echoes Phase 3's "Active Verification". After modifying core code, the AI must prove the logic works through automated tests rather than making assumptions. It catches edge cases early and prevents manual debugging loops.
@@ -311,7 +313,10 @@ alias sys-ask="python /path/to/project/scripts/query.py"
 
 #### 5. Retrieval Strategy Upgrades (For Production)
 To reduce noise from irrelevant context, it is highly recommended to extend `query.py` with:
-- **Hybrid Retrieval**: Combine BM25 (exact keyword match) with Vector (semantic match). In engineering, searching for specific exact variable/function names is often more precise than relying on pure semantics. Use a distribution (e.g., 70% Vector, 30% Keyword).
+- **Bimodal Retrieval (FTS + Vector)**: In engineering, exact keyword matching (Full-Text Search) for specific variable/function names or error codes is often more precise than pure semantics. Recommended:
+    - **FTS (Full-Text Search)**: For precise Symbol lookups.
+    - **Vector (Semantic)**: For fuzzy intent understanding.
+- **Hybrid Retrieval**: Combine BM25 and Vector. Use a distribution (e.g., 70% Vector, 30% Keyword).
 - **Reranker**: Apply a cross-encoder reranker model (or simple BM25 rescoring / RF models) to the initial Top-K results. This drastically reduces false positives when fetching across different modules.
 - **Query Router**: Dynamically route queries to different memory layers (Layer 1-4) based on the user's intent classification (e.g., Debug, Architecture, Ops, Security).
 

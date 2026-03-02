@@ -80,6 +80,7 @@
   - **即時輸出審計 (Immediate Output Audit)**：不論 Exit code，須立即分析 stdout/stderr。主動搜尋 `Error`, `Warning`, `Failed`, `Missing`, `Not found` 等關鍵字，確認實質結果。
   - **實體狀態驗證 (Post-Execution Verification)**：操作後立即檢視目標狀態。涉及檔案則 `ls` 或 `view_file`；涉及服務則 `docker ps` 或檢查 Healthcheck。
   - **缺漏稽核 (Omission Audit)**：完成大項操作後，主動對照原始需求，確認無「孤兒檔案」或遺漏的參數調整。
+- **平台相容性與語法稽核 (Platform Compatibility & Syntax Audit)**：在引入特定平台標籤 (如 MediaWiki 的 `<syntaxhighlight>`) 或依賴擴充功能前，AI **必須**先確認目標環境是否支援。若不支援，應回歸標準相容語法 (如 `<pre>`) 或尋找替代方案，嚴禁盲目產出無效語法。
 - **工具試配與靈活替換 (Tool Adjustment & Pivot)**：引入新工具或腳本後，先以最小範圍 (Dry-run) 實測。若遭遇版本不相容或文件過時，AI 應自主搜尋最新解法調適；若評估修復成本過高，須果斷判定工具不適任並切換替代方案，不陷入死胡同。
 - **自我修復與求援 (Self-Healing & Escalation)**：若遇報錯 (黃燈)，AI 需自主讀取 Log，微調 (例如調用 `uv` 補裝依賴套件) 後重新重試，不立刻打擾使用者。僅在連續失敗 3 次或遭遇不可逆的致命錯誤 (紅燈) 時，才中斷迴圈，並帶著精煉的 Error Log 向使用者求援。
 
@@ -101,6 +102,7 @@
   - 環境初始化：`uv init` / `uv venv`
   - 安裝套件：`uv pip install <package>` (而非 `pip install`)
   - 執行腳本：`uv run <script.py>` (自動使用虛擬環境，無須 source 啟動)
+- **macOS 穩定性提示**：在 macOS 環境下，為避免 Python `requests` 分送時遭遇 SSL 憑證檢查失敗，AI 應主動在維護腳本中整合 `certifi` 並重置 `ssl._create_default_https_context`。
 
 ### 2. 自動化測試驗證：`pytest`
 - **為什麼用**：呼應 Phase 3 的「主動驗證」。AI 修改核心程式碼後，必須透過測試來證明邏輯正確，或是捕獲邊界錯誤 (Edge Cases)，嚴禁假設程式碼會動就直接交差，更要避免人肉除錯。
@@ -307,8 +309,11 @@ alias sys-ask="python /path/to/project/scripts/query.py"
 
 #### 5. 檢索策略升級建議 (Retrieval Upgrades)
 為了降低無關片段的干擾，強烈建議在生產環境中將 `query.py` 擴充實作以下機制：
-- **混合檢索 (Hybrid Retrieval)**：結合 BM25 (精確關鍵字) 與 Vector (向量語義)，在工程領域中「變數/函式名稱」的關鍵字比對往往比起單純語義更精準。實行召回分流：向量佔 70%，關鍵字佔 30%。
-- **重排序 (Reranker)**：將初步檢索出的 Top-K 結果套用 Reranker 模型 (如簡單的 BM25 再次打分或 RF 模型) 二次篩選，大幅減少跨檔案、跨模組時的誤取。
+- **雙軌檢索 (Bimodal Retrieval: FTS + Vector)**：在工程領域中，「變數/函式名稱」或「錯誤碼」的精確比對 (Full-Text Search) 往往比語義更有效。建議：
+    - **FTS (全文檢索)**：用於精確 Symbol 查找。
+    - **Vector (向量語義)**：用於模糊意圖理解。
+- **混合檢索 (Hybrid Retrieval)**：結合 BM25 與 Vector，實行召回分流：向量佔 70%，關鍵字佔 30%。
+- **重排序 (Reranker)**：將初步檢索出的 Top-K 結果套用 Reranker 模型二次篩選，大幅減少跨檔案、跨模組時的誤取。
 - **意圖路由 (Query Router)**：根據使用者的搜尋字串判斷 Intent (例如分流為 Debug, Architecture, Ops, Security)，動態路由查閱不同記憶層 (Layer 1~4)。
 
 ---
