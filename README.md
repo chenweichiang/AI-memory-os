@@ -454,20 +454,20 @@ To ensure long-term project stability and the realization of the "Immediate Veri
 
 ### 1. Static Layer: Static Code Audit (Linting)
 - **Tools**: `ShellCheck` (Shell), `Ruff` (Python).
-- **Goal**: Catch syntax errors, unsafe variable references, and style deviations before execution.
+- **Core Value**: Catch syntax errors, unsafe variable references, and style deviations before execution. AI must ensure `make lint` passes before committing.
 
-### 2. Logic Layer: Script Unit Testing
+### 2. Logic Layer: Script Unit & Functional Testing
 - **Tools**: `Bats-core` (Shell), `Pytest` (Python).
-- **Implementation**: Write Mock tests for core maintenance scripts (e.g., `watchdog.sh`) to verify logical convergence under boundary conditions (e.g., network failure, disk full).
+- **Test-Driven Self-Healing**: When modifying core logic, AI should follow a "Test-First" or "Test-Attached" approach. If validation fails, AI must use test output as context for auto-correction, strictly avoiding "blind manual testing."
+- **Implementation**: Write unit tests for core scripts (e.g., `ingest.py`, `wiki_sync.py`).
 
-### 3. State Layer: Final Server State Verification (Integration/State)
+### 3. State Layer: Integration & Environmental State Verification
 - **Tools**: `Testinfra` (Pytest extension).
-- **Core Value**: Bridges the gap between "correct code" and a "correct environment."
+- **Core Value**: Ensures the "post-deployment server" is in the correct physical state.
 - **Verification Items**:
-    - Remote directory permissions and UID/GID (e.g., `uploads` belonging to a specific container user).
-    - Docker container Healthcheck status.
-    - System service port listening status.
-    - Disk space and system load.
+    - **Permission Audit**: Verify directory UID/GID and mode bits adhere to security specs.
+    - **Service Health**: Verify Docker Healthchecks and listening ports are active.
+    - **Credential Check**: Ensure API credential files exist and have the correct permission masks.
 
 ## XIII. Unified Memory OS (Memory API)
 
