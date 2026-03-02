@@ -1,5 +1,3 @@
-*🌍 Read this in other languages: [English](README.md), [繁體中文](README_zh-TW.md)*
-
 # 🧠 Universal AI Long-Term Memory & Dynamic Workflow Blueprint
 
 ---
@@ -82,7 +80,10 @@ This framework provides not only static memory but also defines a **Dynamic Reas
 
 ### 3. Phase 3: Self-Healing Execution Loop
 - **Trigger**: Entering the tool operation phase (file modifications, terminal executions).
-- **Action**: After writing code or issuing commands, the AI **must actively trigger Physical Verification**. For example: use `curl -I` for web changes, `docker logs --tail 50` for microservices, or run `pytest` to catch regressions. Never blindly assume code works just by looking at it.
+- **Action**: After writing code or issuing commands, the AI **must actively trigger Verification mechanisms**:
+  - **Immediate Output Audit**: Regardless of the exit code, analyze stdout/stderr immediately. Actively search for keywords like `Error`, `Warning`, `Failed`, `Missing`, or `Not found` to confirm the actual outcome.
+  - **Post-Execution Verification**: Immediately inspect the target state. For files, use `ls` or `view_file`; for services, use `docker ps` or check Healthchecks.
+  - **Omission Audit**: After major operations, proactively audit against original requirements to ensure no "orphan files" or missed parameter adjustments.
 - **Tool Adjustment & Pivot**: Upon introducing a new tool or script, test it on a minimal scope (Dry-run) first. If version incompatibilities or outdated APIs are discovered, the AI should autonomously search for the latest documentation to adapt. If the adaptation cost is deemed too high, the AI must decisively abandon the tool and pivot to viable alternatives without falling into a rabbit hole.
 - **Self-Healing & Escalation**: If an error (Yellow Light) is encountered, the AI must autonomously read the Log, make adjustments (e.g., using `uv` to install a missing dependency), and retry without immediately disturbing the user. The loop is only aborted to ask the user for help (with a concise Error Log summary) when encountering 3 consecutive failures or an irreversible fatal error (Red Light).
 

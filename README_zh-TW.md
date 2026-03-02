@@ -1,5 +1,3 @@
-*🌍 Read this in other languages: [English](README.md), [繁體中文](README_zh-TW.md)*
-
 # 🧠 Universal AI Long-Term Memory Framework (全域 AI 長期記憶與動態工作流藍圖)
 
 ---
@@ -78,7 +76,10 @@
 
 ### 3. Phase 3: 閉環執行與自我修復 (Self-Healing Execution)
 - **觸發時機**：進入工具操作階段 (修改檔案、Terminal 執行)。
-- **動作**：AI 在寫碼或下達指令後，**必須主動觸發實體驗證 (Physical Verification)**。例如：對網頁變更執行 `curl -I`、對微服務執行 `docker logs --tail 50` 觀察狀態、或運行 `pytest` 確保無回歸錯誤，嚴禁僅憑肉眼假設程式碼會動。
+- **動作**：AI 在寫碼或下達指令後，**必須主動觸發驗證機制 (Verification)**：
+  - **即時輸出審計 (Immediate Output Audit)**：不論 Exit code，須立即分析 stdout/stderr。主動搜尋 `Error`, `Warning`, `Failed`, `Missing`, `Not found` 等關鍵字，確認實質結果。
+  - **實體狀態驗證 (Post-Execution Verification)**：操作後立即檢視目標狀態。涉及檔案則 `ls` 或 `view_file`；涉及服務則 `docker ps` 或檢查 Healthcheck。
+  - **缺漏稽核 (Omission Audit)**：完成大項操作後，主動對照原始需求，確認無「孤兒檔案」或遺漏的參數調整。
 - **工具試配與靈活替換 (Tool Adjustment & Pivot)**：引入新工具或腳本後，先以最小範圍 (Dry-run) 實測。若遭遇版本不相容或文件過時，AI 應自主搜尋最新解法調適；若評估修復成本過高，須果斷判定工具不適任並切換替代方案，不陷入死胡同。
 - **自我修復與求援 (Self-Healing & Escalation)**：若遇報錯 (黃燈)，AI 需自主讀取 Log，微調 (例如調用 `uv` 補裝依賴套件) 後重新重試，不立刻打擾使用者。僅在連續失敗 3 次或遭遇不可逆的致命錯誤 (紅燈) 時，才中斷迴圈，並帶著精煉的 Error Log 向使用者求援。
 
