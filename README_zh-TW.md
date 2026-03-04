@@ -1,5 +1,7 @@
 # 🧠 AI Memory OS Blueprint Generator
 
+[繁體中文](README_zh-TW.md) | [English](README.md)
+
 [![Deploy](https://github.com/chenweichiang/AI-memory-os/actions/workflows/deploy.yml/badge.svg)](https://interaction.tw/project_gen/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![AGENTS.md 標準](https://img.shields.io/badge/standard-AGENTS.md-blue)](https://agents.md/)
