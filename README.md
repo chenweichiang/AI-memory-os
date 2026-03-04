@@ -1,51 +1,73 @@
-# 🧠 AI Memory OS Blueprint Generator
+# React + TypeScript + Vite
 
-[![Deploy](https://github.com/chenweichiang/AI-memory-os/actions/workflows/deploy.yml/badge.svg)](https://interaction.tw/project_gen/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![AGENTS.md Standards](https://img.shields.io/badge/standard-AGENTS.md-blue)](https://agents.md/)
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-AI Memory OS Blueprint Generator is a React-based Visual SPA designed to **bridge the gap between AI Coding Prompt Engineering and secure DevOps Infrastructure**. It allows developers to configure and export a fully-fledged isolated container working environment for AI agents (e.g., Cursor, Windsurf) through an intuitive UI. 
+Currently, two official plugins are available:
 
-Instead of manually crafting `AGENTS.md` and writing boilerplate Dockerfiles, this generator packages isolated networking, self-healing mechanics, automated git-hook vector syncing, and zero-destruct execution policies into a single, cohesive ZIP archive.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
----
+## React Compiler
 
-## 🚀 Features
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-- **Proactive AI Execution (Zero-Destruct Protocol)**: The generated `SETUP.md` includes AI commands that proactively audit the host (`if ! docker ps...`) before establishing the container environment. The AI acts as a DevOps engineer without requiring human prompts to start the setup.
-- **Strict Container Segregation**: Your AI is confined to a Docker environment (`.dockerenv` physical barriers) for all execution—preventing accidental `rm -rf /` or pip package pollution on your Mac/PC host.
-- **Edge Gateway & Self-Healing (VPS Ready)**: Automatically configures Caddy reverse proxies with academic bot whitelists and crontab-driven Watchdog Bash scripts that restart frozen docker services.
-- **Semantic Memory Automation**: Instantly stubs out Python files for `LanceDB` local vector embeddings and `LlamaIndex` cloud integrations. Features `pre-push` git hooks to guarantee the AI synchronizes memory prior to every commit.
-- **Multi-Layer Test Matrix**: Stubs Testinfra (Docker validation) and Bats-core (Shell behavior testing).
+## Expanding the ESLint configuration
 
-## 🛠 Usage
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-1. **Access the Application**: Visit the live deployment at [https://interaction.tw/project_gen/](https://interaction.tw/project_gen/) or clone this repository and run `npm run dev`.
-2. **Select Target Scope**: Choose between "Local Only", "Public VPS", or "Full Stack" to narrow down necessary modules.
-3. **Configure Settings**: Select the modules you wish to package into your AI's brain (e.g., Python Tooling, Ansible playbooks, Conversation Digest).
-4. **Download Blueprint**: Hit download, unzip into your new empty project folder.
-5. **Awaken the Agent**: Open the folder in an AI-native editor (e.g., Cursor) and simply state: *"Read AGENTS.md and execute the initial setup."*
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-## 📁 Repository Structure
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-This repository is built with **React**, **Vite**, and **TailwindCSS**. It relies on `JSZip` to bundle the dynamic Markdown and Shell script strings client-side. There is no backend database required.
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
 
-\`\`\`
-src/
-├── App.tsx          // UI logic, Module selection lists, JSZip logic
-├── App.css          // Vanilla extensions for TailwindCSS
-├── index.css        // Tailwind directives
-\`\`\`
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-## 📚 Motivation
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-Relying on AI to generate code requires establishing hard guardrails. The AI Memory OS was born out of the Interaction Lab's academic research into making Autonomous Agents resilient and auditable. By packing the environment constraints (`limits: memory: 2G`) into the repo alongside the `AGENTS.md` persona directions, teams can guarantee that any AI checking out the project operates under the exact same technical constraints and toolchains.
-
-## 👥 Authors
-
-- **Chenwei Chiang** (Interaction Lab)
-
-## 📄 License & Standards
-
-This project uses the [AGENTS.md](https://agents.md/) open standard protocol for instructing autonomous agents. 
-Open Source under the MIT License.
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
