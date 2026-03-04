@@ -17,6 +17,8 @@ Instead of manually crafting `AGENTS.md` and writing boilerplate Dockerfiles, th
 - **Proactive AI Execution (Zero-Destruct Protocol)**: The generated `SETUP.md` includes AI commands that proactively audit the host (`if ! docker ps...`) before establishing the container environment. The AI acts as a DevOps engineer without requiring human prompts to start the setup.
 - **Strict Container Segregation**: Your AI is confined to a Docker environment (`.dockerenv` physical barriers) for all execution—preventing accidental `rm -rf /` or pip package pollution on your Mac/PC host.
 - **Edge Gateway & Self-Healing (VPS Ready)**: Automatically configures Caddy reverse proxies with academic bot whitelists and crontab-driven Watchdog Bash scripts that restart frozen docker services.
+- **Teardown / Uninstall Safe Mode**: Generate a dedicated `UNINSTALL_TEARDOWN.md` blueprint to instruct the agent to safely decouple and remove specific modules (like Docker services or Git Hooks) without accidentally destroying user code or database volumes.
+- **Local Private LLMs (Ollama)**: Deploys a fully isolated Ollama engine container, allowing the AI to autonomously pull and run models (e.g., `gemma:2b`) for a completely offline, privacy-first generation environment.
 - **Semantic Memory Automation**: Instantly stubs out Python files for `LanceDB` local vector embeddings and `LlamaIndex` cloud integrations. Features `pre-push` git hooks to guarantee the AI synchronizes memory prior to every commit.
 - **Multi-Layer Test Matrix**: Stubs Testinfra (Docker validation) and Bats-core (Shell behavior testing).
 
