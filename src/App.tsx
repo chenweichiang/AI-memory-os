@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { BrainCircuit, Download, Code2, Server, Database, Github, BookOpen, Layers, AlertCircle, Monitor, Globe, Network, Wrench, ShieldCheck } from 'lucide-react';
+import { BrainCircuit, Download, Code2, Server, Database, Github, BookOpen, Layers, AlertCircle, Monitor, Globe, Network, Wrench, ShieldCheck, FolderGit2, UserCircle, Link } from 'lucide-react';
 
 const MODULES = [
   {
@@ -332,7 +332,12 @@ function App() {
               <BrainCircuit className="w-8 h-8 text-blue-600" />
               <h1 className="text-2xl font-bold tracking-tight">AI Memory OS</h1>
             </div>
-            <p className="text-sm text-gray-500 mb-6">Configure and export your persistent memory and infrastructure blueprint.</p>
+            <div className="text-sm text-gray-500 mb-6 leading-relaxed">
+              A foundation generator designed for AI-assisted development.<br />
+              Equip your AI assistant (like Cursor or Windsurf) with a standardized persona (AGENTS.md),<br />
+              autonomous workflows, and an isolated Docker infrastructure from day one.<br />
+              Select your required modules below to export a production-ready project blueprint.
+            </div>
 
             <div className="space-y-4 mb-8">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Step 1: Deployment Scope</h3>
@@ -366,20 +371,58 @@ function App() {
               </div>
             </div>
 
-            <div className="space-y-4 mb-8">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Step 2: Global Settings</h3>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-                <input type="text" name="projectName" value={config.projectName} onChange={handleConfigChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+            <div className="space-y-5 mb-8">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Step 2: Global Settings</h3>
+
+              <div className="relative group">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">Project Name</label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <FolderGit2 className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="text"
+                    name="projectName"
+                    value={config.projectName}
+                    onChange={handleConfigChange}
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
+                    placeholder="e.g. AI-Memory-OS"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Author Name</label>
-                <input type="text" name="authorName" value={config.authorName} onChange={handleConfigChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+
+              <div className="relative group">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">Author Name / AI Persona Target</label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <UserCircle className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="text"
+                    name="authorName"
+                    value={config.authorName}
+                    onChange={handleConfigChange}
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
+                  />
+                </div>
               </div>
+
               {(deploymentScope === 'server' || deploymentScope === 'full') && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Primary Domain (For Infra)</label>
-                  <input type="text" name="domain" value={config.domain} onChange={handleConfigChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                <div className="relative group animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">Primary Domain (For Infra & Caddy)</label>
+                  <div className="relative flex items-center">
+                    <div className="absolute left-3 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                      <Link className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="text"
+                      name="domain"
+                      value={config.domain}
+                      onChange={handleConfigChange}
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
+                      placeholder="e.g. project.interaction.tw"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -419,12 +462,21 @@ function App() {
 
                             {/* Rendering Prerequisites Warnings if the module is selected */}
                             {mod.prerequisites && selectedModules[mod.id] && (
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {mod.prerequisites.map((req: string, idx: number) => (
-                                  <span key={idx} className="flex items-center gap-1 text-[10px] bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded shadow-sm">
-                                    <AlertCircle className="w-3 h-3" /> Prefix req: {req}
-                                  </span>
-                                ))}
+                              <div className="mt-3 rounded-md bg-slate-50 border border-slate-200 overflow-hidden">
+                                <div className="bg-slate-100/50 px-3 py-2 border-b border-slate-200 flex items-center gap-2">
+                                  <AlertCircle className="w-3.5 h-3.5 text-slate-500" />
+                                  <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Action Required Before Execution</p>
+                                </div>
+                                <ul className="divide-y divide-slate-100 bg-white">
+                                  {mod.prerequisites.map((req: string, idx: number) => (
+                                    <li key={idx} className="px-3 py-2.5 flex items-start gap-2.5 hover:bg-slate-50 transition-colors">
+                                      <div className="mt-1 flex-shrink-0">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500/80 ring-4 ring-blue-500/10"></div>
+                                      </div>
+                                      <span className="text-xs text-slate-700 font-medium leading-relaxed">{req}</span>
+                                    </li>
+                                  ))}
+                                </ul>
                               </div>
                             )}
 
@@ -490,7 +542,6 @@ function App() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
