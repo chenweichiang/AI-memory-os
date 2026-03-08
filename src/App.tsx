@@ -7,7 +7,7 @@ import { DOMAINS } from './domains';
 
 const TRANSLATIONS = {
   en: {
-    title: "AI Memory OS",
+    title: "AIMOS — AI Memory OS",
     subtitleSetup: "Blueprint Generator",
     subtitleTeardown: "Teardown Assistant",
     labSite: "Lab Site",
@@ -74,7 +74,7 @@ const TRANSLATIONS = {
     domainGeneral: "General (No specific domain)",
   },
   zh: {
-    title: "AI Memory OS",
+    title: "AIMOS — AI Memory OS",
     subtitleSetup: "專案藍圖產生器",
     subtitleTeardown: "卸載清理助手",
     labSite: "研究室首頁",
@@ -941,7 +941,7 @@ function App() {
           ))}
         </div>
         <div className="text-[10px] text-slate-400/80 font-medium tracking-widest uppercase">
-          Last Updated &bull; 2026-03-08
+          Proposed &bull; 2026-02-28 &nbsp;&nbsp;|&nbsp;&nbsp; Last Updated &bull; 2026-03-08
         </div>
       </footer>
     </div>

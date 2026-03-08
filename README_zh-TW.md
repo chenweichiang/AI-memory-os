@@ -1,4 +1,4 @@
-# 🧠 AI Memory OS — 藍圖產生器
+# 🧠 AIMOS — AI Memory OS 藍圖產生器
 
 [繁體中文](README_zh-TW.md) | [English](README.md)
 
@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![AGENTS.md](https://img.shields.io/badge/標準-AGENTS.md-blue?style=flat-square)](https://agents.md/)
 
-**AI Memory OS** 是一個零後端的 React 純前端應用程式，用來為 AI 程式助手（Cursor、Windsurf、GitHub Copilot 等）產生容器化工作空間藍圖。使用者透過視覺化介面配置專案設定，一鍵下載 ZIP 壓縮檔 —— AI 打開後即擁有完整的記憶系統、行為準則、以及領域專業知識。
+**AIMOS（AI Memory OS）** 是一個零後端的 React 純前端應用程式，用來為 AI 程式助手（Cursor、Windsurf、GitHub Copilot 等）產生容器化工作空間藍圖。使用者透過視覺化介面配置專案設定，一鍵下載 ZIP 壓縮檔 —— AI 打開後即擁有完整的記憶系統、行為準則、以及領域專業知識。
 
 > **不需要 API Key。不需要雲端服務。一切都在瀏覽器中完成。**
 

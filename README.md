@@ -1,4 +1,4 @@
-# 🧠 AI Memory OS — Blueprint Generator
+# 🧠 AIMOS — AI Memory OS Blueprint Generator
 
 [繁體中文](README_zh-TW.md) | [English](README.md)
 
@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![AGENTS.md](https://img.shields.io/badge/standard-AGENTS.md-blue?style=flat-square)](https://agents.md/)
 
-**AI Memory OS** is a zero-backend React SPA that generates containerized workspace blueprints for AI coding agents (Cursor, Windsurf, GitHub Copilot, etc.). Instead of manually writing `AGENTS.md`, Dockerfiles, and setup scripts, users configure their project through a visual interface and download a single ZIP containing everything an AI agent needs to operate autonomously — with memory, guardrails, and domain expertise built in.
+**AIMOS (AI Memory OS)** is a zero-backend React SPA that generates containerized workspace blueprints for AI coding agents (Cursor, Windsurf, GitHub Copilot, etc.). Instead of manually writing `AGENTS.md`, Dockerfiles, and setup scripts, users configure their project through a visual interface and download a single ZIP containing everything an AI agent needs to operate autonomously — with memory, guardrails, and domain expertise built in.
 
 > **Zero API keys required. Zero cloud dependencies. Everything runs in the browser.**
 
