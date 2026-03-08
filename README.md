@@ -1,59 +1,160 @@
-# 🧠 AI Memory OS Blueprint Generator
+# 🧠 AI Memory OS — Blueprint Generator
 
 [繁體中文](README_zh-TW.md) | [English](README.md)
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-project.interaction.tw-success?style=flat-square)](https://project.interaction.tw/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![AGENTS.md Standards](https://img.shields.io/badge/standard-AGENTS.md-blue)](https://agents.md/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-project.interaction.tw-00C853?style=flat-square&logo=vercel)](https://project.interaction.tw/)
+[![Tests](https://img.shields.io/badge/Tests-104%20passing-brightgreen?style=flat-square)](src/generators.test.ts)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![AGENTS.md](https://img.shields.io/badge/standard-AGENTS.md-blue?style=flat-square)](https://agents.md/)
 
-AI Memory OS Blueprint Generator is a React-based Visual SPA designed to **bridge the gap between AI Coding Prompt Engineering and secure DevOps Infrastructure**. It allows developers to configure and export a fully-fledged isolated container working environment for AI agents (e.g., Cursor, Windsurf) through an intuitive UI. 
+**AI Memory OS** is a zero-backend React SPA that generates containerized workspace blueprints for AI coding agents (Cursor, Windsurf, GitHub Copilot, etc.). Instead of manually writing `AGENTS.md`, Dockerfiles, and setup scripts, users configure their project through a visual interface and download a single ZIP containing everything an AI agent needs to operate autonomously — with memory, guardrails, and domain expertise built in.
 
-Instead of manually crafting `AGENTS.md` and writing boilerplate Dockerfiles, this generator packages isolated networking, self-healing mechanics, automated git-hook vector syncing, and zero-destruct execution policies into a single, cohesive ZIP archive.
+> **Zero API keys required. Zero cloud dependencies. Everything runs in the browser.**
 
 ---
 
-## 🚀 Features
+## ✨ What It Generates
 
-- **Proactive AI Execution (Zero-Destruct Protocol)**: The generated `SETUP.md` includes AI commands that proactively audit the host (`if ! docker ps...`) before establishing the container environment. The AI acts as a DevOps engineer without requiring human prompts to start the setup.
-- **Strict Container Segregation**: Your AI is confined to a Docker environment (`.dockerenv` physical barriers) for all execution—preventing accidental `rm -rf /` or pip package pollution on your Mac/PC host.
-- **Edge Gateway & Self-Healing (VPS Ready)**: Automatically configures Caddy reverse proxies with academic bot whitelists and crontab-driven Watchdog Bash scripts that restart frozen docker services.
-- **Teardown / Uninstall Safe Mode**: Generate a dedicated `UNINSTALL_TEARDOWN.md` blueprint to instruct the agent to safely decouple and remove specific modules (like Docker services or Git Hooks) without accidentally destroying user code or database volumes.
-- **Local Private LLMs (Ollama)**: Deploys a fully isolated Ollama engine container, allowing the AI to autonomously pull and run models (e.g., `gemma:2b`) for a completely offline, privacy-first generation environment.
-- **Semantic Memory Automation**: Instantly stubs out Python files for `LanceDB` local vector embeddings and `LlamaIndex` cloud integrations. Features `pre-push` git hooks to guarantee the AI synchronizes memory prior to every commit.
-- **Local Context Bundler**: Automatically scans git state, recent commits, LanceDB semantic search results, and past conversation digests at the start of every session. It bundles this into `CONTEXT_SNAPSHOT.md`, giving the AI immediate full-context awareness with "Zero Token Cost", bypassing exploratory cloud LLM calls.
-- **Semantic Response Cache**: Implements a local SQLite database that intercepts AI questions before they hit the cloud. If the new query shares high semantic similarity (>= 92%) with a previously answered question, the AI retrieves the cached answer—resulting in incredible cost savings and speed enhancements.
-- **1-Click Secure Homework Submission**: Built-in 5GB direct-to-CDN upload system secured by Google OIDC (`InstalledAppFlow`). Guarantees student real-name verification and handles massive assignments without exhausting VPS bandwidth.
-- **Auto-Generated User Manuals**: Dynamically bundles dual-language (`USER_GUIDE_EN.md`, `USER_GUIDE_ZH.md`) documentation tailored to your exact module selections so students know exactly how to trigger the AI safely.
-- **Multi-Layer Test Matrix**: Stubs Testinfra (Docker validation) and Bats-core (Shell behavior testing).
+Each downloaded ZIP is a self-contained AI workspace blueprint:
 
-## 🛠 Usage
+| File | Purpose |
+|---|---|
+| `AGENTS.md` | AI persona, rules, Decision Log, and Cloud LLM Reduction Protocol |
+| `SETUP.md` | Step-by-step autonomous initialization guide for the AI |
+| `.agents/workflows/start.md` | Session-start protocol (context retrieval, health check) |
+| `.agents/workflows/end.md` | Session-end protocol (memory persistence, git commit) |
+| `.agents/module_registry.json` | Machine-readable manifest of active modules and script paths |
+| `Dockerfile` + `docker-compose.yml` | Isolated container environment |
+| `scripts/system/health_check.py` | 6-point self-diagnostic (always included) |
+| `docs/DOMAIN_CONTEXT.md` | Domain-specific best practices and directory conventions |
+| `docs/USER_GUIDE_ZH.md` / `EN.md` | Auto-generated user manuals matching selected modules |
 
-1. **Access the Application**: Visit the live deployment at [https://project.interaction.tw/](https://project.interaction.tw/) or clone this repository and run `npm run dev`.
-2. **Select Target Scope**: Choose between "Local Only", "Public VPS", or "Full Stack" to narrow down necessary modules.
-3. **Configure Settings**: Select the modules you wish to package into your AI's brain (e.g., Python Tooling, Ansible playbooks, Conversation Digest).
-4. **Download Blueprint**: Hit download, unzip into your new empty project folder.
-5. **Awaken the Agent**: Open the folder in an AI-native editor (e.g., Cursor) and simply state: *"Read AGENTS.md and execute the initial setup."*
+## 🎯 Domain System
 
-## 📁 Repository Structure
+Choose a domain to inject **role-specific AI behavior** into every generated file:
 
-This repository is built with **React**, **Vite**, and **TailwindCSS**. It relies on `JSZip` to bundle the dynamic Markdown and Shell script strings client-side. There is no backend database required.
+| Domain | AI Behavior | Key Rules |
+|---|---|---|
+| 🔧 **General Purpose** | Standard development assistant | Code quality, commit discipline, dependency management |
+| 🎓 **Student Project** | Teaching assistant (guides, doesn't give answers) | Academic integrity, Chinese documentation, weekly progress logs |
+| 🎨 **Design Work** | Design-aware collaborator | Asset management (SVG/compressed images), Design Tokens, WCAG accessibility |
+| ⚡ **Interactive Coding** | Real-time performance expert | No I/O in `draw()`, hardware safety guards, demo-ready commits |
 
-\`\`\`
+Each domain auto-configures:
+- **AGENTS.md rules** — domain-specific coding standards
+- **SETUP.md steps** — directory scaffolding and templates
+- **start.md queries** — LanceDB semantic queries or local file review topics
+- **Recommended modules** — pre-selected based on domain needs
+- **Decision Log seeds** — pre-filled architectural decisions
+- **DOMAIN_CONTEXT.md** — best practices document
+
+## 🧩 Module System
+
+14 composable modules across 5 categories:
+
+### Memory & Knowledge
+| Module | What It Does |
+|---|---|
+| **LanceDB** | Local vector database with `ingest.py` / `query.py` for semantic search |
+| **Context Bundler** | Generates `CONTEXT_SNAPSHOT.md` at session start — zero-token context awareness |
+| **Response Cache** | SQLite-backed semantic cache (≥92% similarity → skip cloud LLM) |
+| **Conversation Digest** | Extracts and stores session summaries for long-term memory |
+| **Cloud Drive** | LlamaIndex integration for Google Drive / OneDrive indexing |
+| **Ollama** | Local LLM container (gemma:2b) for offline, privacy-first generation |
+
+### CI/CD & Quality
+| Module | What It Does |
+|---|---|
+| **Python Tooling** | `pyproject.toml` + pytest + ruff configuration |
+| **Git Hook** | Pre-push: GitLeaks secret scanning + LanceDB auto-sync |
+| **Testing Matrix** | Testinfra (Docker) + Bats-core (Shell) test scaffolding |
+
+### Infrastructure
+| Module | What It Does |
+|---|---|
+| **Edge Gateway** | Caddy reverse proxy with academic bot whitelist |
+| **Watchdog** | Crontab health monitoring + auto-restart for Docker services |
+| **IaC Ansible** | Ansible playbooks for remote deployment automation |
+
+### Education
+| Module | What It Does |
+|---|---|
+| **Homework Submission** | 5GB direct-to-CDN upload with Google OIDC verification |
+
+### Environment
+| Module | What It Does |
+|---|---|
+| **Academic LaTeX** | TexLive + CJK font support in Docker |
+
+## 🚀 Usage
+
+### Online (Recommended)
+1. Visit **[project.interaction.tw](https://project.interaction.tw/)**
+2. Configure project name, roles, deployment scope
+3. Select a domain (optional but recommended)
+4. Toggle modules as needed
+5. Download ZIP → Unzip into project folder
+6. Open in AI editor → Tell your AI: *"Read AGENTS.md and execute SETUP.md"*
+
+### Local Development
+```bash
+git clone https://github.com/chenweichiang/AI-memory-os.git
+cd AI-memory-os
+npm install
+npm run dev      # → http://localhost:5173
+npm test         # → 104 tests
+npm run build    # → Production bundle
+```
+
+## 🏗 Architecture
+
+```
 src/
-├── App.tsx          // UI logic, Module selection lists, JSZip logic
-├── App.css          // Vanilla extensions for TailwindCSS
-├── index.css        // Tailwind directives
-\`\`\`
+├── App.tsx              # UI: 4-step wizard, domain selector, module toggles
+├── generators.ts        # All prompt/script generators (1460 lines, 104 tests)
+├── generators.test.ts   # Full coverage test suite
+├── domains/
+│   ├── index.ts         # Domain registry and type definitions
+│   ├── general.ts       # General Purpose domain profile
+│   ├── student.ts       # Student Project domain profile
+│   ├── design.ts        # Design Work domain profile
+│   └── interactive.ts   # Interactive Coding domain profile
+├── main.tsx             # React entry point
+└── index.css            # Tailwind directives
+```
 
-## 📚 Motivation
+**Key design decisions:**
+- **Zero backend** — All generation happens client-side via TypeScript string templates
+- **Zero dependencies on AI APIs** — No tokens consumed during generation
+- **Module-aware prompts** — Cloud LLM Reduction Protocol only shows steps for active modules
+- **Domain-aware queries** — `start.md` generates executable LanceDB commands when available, falls back to topic review when not
 
-Relying on AI to generate code requires establishing hard guardrails. The AI Memory OS was born out of the Interaction Lab's academic research into making Autonomous Agents resilient and auditable. By packing the environment constraints (`limits: memory: 2G`) into the repo alongside the `AGENTS.md` persona directions, teams can guarantee that any AI checking out the project operates under the exact same technical constraints and toolchains.
+## 🧪 Testing
 
-## 👥 Authors
+```bash
+npm test   # 104 tests covering:
+```
 
-- **Chiang, Chenwei (江振維)** - Interaction Lab
+| Category | Tests | Coverage |
+|---|---|---|
+| Helpers | 4 | Name sanitization, container naming |
+| Static templates | 10 | All Python/Bash scripts validated |
+| Teardown | 10 | Module-specific uninstall instructions |
+| AGENTS.md | 7 | Persona, architecture, LLM protocol |
+| SETUP.md | 9 | Docker, Python, prerequisites |
+| Workflows | 7 | start.md / end.md generation |
+| Infrastructure | 18 | Dockerfile, Compose, Caddy, Ansible |
+| User Docs | 9 | ZH/EN guide generation |
+| Module Isolation | 3 | No cross-contamination between modules |
+| Domain Injection | 7 | Rules, setup, queries per domain |
+| Phase 4 | 9 | Health check, module registry |
+| **Total** | **104** | |
 
-## 📄 License & Standards
+## 👥 Author
 
-This project uses the [AGENTS.md](https://agents.md/) open standard protocol for instructing autonomous agents. 
-Open Source under the MIT License.
+- **Chiang, Chenwei (江振維)** — [Interaction Lab](https://interaction.tw)
+
+## 📄 License
+
+Open source under the [MIT License](https://opensource.org/licenses/MIT).
+Built on the [AGENTS.md](https://agents.md/) open standard for autonomous agent instruction.
