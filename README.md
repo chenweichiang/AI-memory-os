@@ -20,6 +20,10 @@ Instead of manually crafting `AGENTS.md` and writing boilerplate Dockerfiles, th
 - **Teardown / Uninstall Safe Mode**: Generate a dedicated `UNINSTALL_TEARDOWN.md` blueprint to instruct the agent to safely decouple and remove specific modules (like Docker services or Git Hooks) without accidentally destroying user code or database volumes.
 - **Local Private LLMs (Ollama)**: Deploys a fully isolated Ollama engine container, allowing the AI to autonomously pull and run models (e.g., `gemma:2b`) for a completely offline, privacy-first generation environment.
 - **Semantic Memory Automation**: Instantly stubs out Python files for `LanceDB` local vector embeddings and `LlamaIndex` cloud integrations. Features `pre-push` git hooks to guarantee the AI synchronizes memory prior to every commit.
+- **Local Context Bundler**: Automatically scans git state, recent commits, LanceDB semantic search results, and past conversation digests at the start of every session. It bundles this into `CONTEXT_SNAPSHOT.md`, giving the AI immediate full-context awareness with "Zero Token Cost", bypassing exploratory cloud LLM calls.
+- **Semantic Response Cache**: Implements a local SQLite database that intercepts AI questions before they hit the cloud. If the new query shares high semantic similarity (>= 92%) with a previously answered question, the AI retrieves the cached answer—resulting in incredible cost savings and speed enhancements.
+- **1-Click Secure Homework Submission**: Built-in 5GB direct-to-CDN upload system secured by Google OIDC (`InstalledAppFlow`). Guarantees student real-name verification and handles massive assignments without exhausting VPS bandwidth.
+- **Auto-Generated User Manuals**: Dynamically bundles dual-language (`USER_GUIDE_EN.md`, `USER_GUIDE_ZH.md`) documentation tailored to your exact module selections so students know exactly how to trigger the AI safely.
 - **Multi-Layer Test Matrix**: Stubs Testinfra (Docker validation) and Bats-core (Shell behavior testing).
 
 ## 🛠 Usage

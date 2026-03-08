@@ -1,125 +1,423 @@
 import React, { useState } from 'react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { BrainCircuit, Download, Code2, Server, Database, Github, BookOpen, Layers, AlertCircle, Monitor, Globe, Network, Wrench, ShieldCheck, FolderGit2, UserCircle, Link, Library, Home } from 'lucide-react';
+import { BrainCircuit, Download, Code2, Server, Database, Github, BookOpen, Layers, AlertCircle, Monitor, Globe, Network, Wrench, ShieldCheck, FolderGit2, UserCircle, Link, Library, Home, Languages, BookCheck, LayoutGrid, X } from 'lucide-react';
+import { type ProjectConfig, getSafeProjectName, assembleZipContent } from './generators';
+import { DOMAINS } from './domains';
+
+const TRANSLATIONS = {
+  en: {
+    title: "AI Memory OS",
+    subtitleSetup: "Blueprint Generator",
+    subtitleTeardown: "Teardown Assistant",
+    labSite: "Lab Site",
+    wiki: "Wiki",
+    github: "GitHub",
+    introTitle: "A foundation generator designed for AI-assisted development.",
+    introDesc: "Equip your AI assistant with a standardized persona, autonomous workflows, and an isolated Docker infrastructure from day one.",
+    introFooterInstall: "Select your required modules below to export a production-ready project blueprint.",
+    introFooterUninstall: "Select the modules you wish to safely tear down and remove from the project.",
+    usageTitle: "Usage Instructions",
+    usageSteps: [
+      "Extract the downloaded ZIP file into your project's root directory.",
+      "Ask your AI assistant (e.g., VS Code Antigravity, Cursor, or Windsurf) to read AGENTS.md and SETUP.md.",
+      "The AI will autonomously identify the environment and guide you through initialization."
+    ],
+    step1: "Step 01",
+    step1Title: "Operational Mode",
+    setupMode: "Setup Mode",
+    teardownMode: "Teardown Mode",
+    step2: "Step 02",
+    step2Title: "Infrastructure Scope",
+    scopeLocal: "Local Only",
+    scopeLocalSub: "Single Dev",
+    scopeServer: "Public VPS",
+    scopeServerSub: "Web Hosting",
+    scopeFull: "Full Stack",
+    scopeFullSub: "Cloud Sync",
+    step3: "Step 03",
+    step3Title: "Project Metadata",
+    projectName: "Project Name",
+    userRole: "User Project Role(s)",
+    aiRole: "AI Project Role(s)",
+    domain: "Target Domain",
+    projectNamePlaceholder: "e.g. AI-Memory-OS",
+    userRolePlaceholder: "Keywords e.g. Lead Architect Designer",
+    aiRolePlaceholder: "Keywords e.g. System Expert Devops",
+    domainPlaceholder: "project.example.com",
+    referenceTitle: "Reference Implementations",
+    referenceSub: "Explore real-world academic projects built with agentic architectures.",
+    viewProject: "View on GitHub",
+    citesageTitle: "CiteSage: AI Citation Verifier",
+    citesageDesc: "An agentic self-learning system for validating academic metadata and semantic consistency.",
+    graphvizTitle: "Academic Wiki Toolchain",
+    graphvizDesc: "Professional SVG rendering toolkit with CJK support, optimized for research and design education.",
+    resourcesMenu: "Resources",
+    refSection: "Reference Projects",
+    labSection: "Lab Links",
+    step4: "Step 04",
+    step4Title: "Component Matrix",
+    required: "Required",
+    core: "Core",
+    actionRequired: "Action Required",
+    previewTitle: "Structure Preview",
+    previewDesc: "// Automatically generated directory snapshot",
+    exportSetup: "Export Blueprint OS",
+    exportTeardown: "Export Teardown OS",
+    footerDesign: "Design by",
+    footerInfra: "Infrastructure",
+    footerManagement: "Management",
+    footerDeployment: "Deployment",
+    academicRes: "Academic Research",
+    aiKnowledge: "AI-Assisted Knowledge",
+    domainLabel: "Project Domain",
+    domainGeneral: "General (No specific domain)",
+  },
+  zh: {
+    title: "AI Memory OS",
+    subtitleSetup: "專案藍圖產生器",
+    subtitleTeardown: "卸載清理助手",
+    labSite: "研究室首頁",
+    wiki: "知識庫",
+    github: "GitHub",
+    introTitle: "專為 AI 協作開發設計的專案基礎產生器。",
+    introDesc: "從第一天起，就為您的 AI 助手配備標準化人格、自動化工作流與隔離的 Docker 基礎設施。",
+    introFooterInstall: "在下方選擇所需的模組，即可匯出正式環境等級的專案藍圖。",
+    introFooterUninstall: "選擇您想要安全卸載並從專案中移除的模組。",
+    usageTitle: "使用說明",
+    usageSteps: [
+      "將下載的 ZIP 檔案解壓縮至您的專案根目錄。",
+      "請您的 AI 助手（如 VS Code Antigravity、Cursor 或 Windsurf）讀取 AGENTS.md 與 SETUP.md。",
+      "AI 將自動識別環境並引導您完成初始化設定。",
+    ],
+    step1: "步驟 01",
+    step1Title: "操作模式",
+    setupMode: "安裝模式",
+    teardownMode: "卸載模式",
+    step2: "步驟 02",
+    step2Title: "基礎架構範圍",
+    scopeLocal: "僅限本地",
+    scopeLocalSub: "單機開發",
+    scopeServer: "雲端主機 (VPS)",
+    scopeServerSub: "網站託管",
+    scopeFull: "全端同步",
+    scopeFullSub: "雲端同步",
+    step3: "步驟 03",
+    step3Title: "專案元數據",
+    projectName: "專案名稱",
+    userRole: "您的成員角色 (關鍵字)",
+    aiRole: "AI 的成員角色 (關鍵字)",
+    domain: "目標網域",
+    projectNamePlaceholder: "例如：AI-Memory-OS",
+    userRolePlaceholder: "用空格區隔例如：首席架構師 研究員",
+    aiRolePlaceholder: "用空格區隔例如：系統專家 自動化 Assistant",
+    domainPlaceholder: "project.example.com",
+    referenceTitle: "實作參考範例",
+    referenceSub: "探索使用 Agentic 架構建立的真實學術研究專案範例。",
+    viewProject: "前往 GitHub 查看",
+    citesageTitle: "CiteSage 學術引用驗證系統",
+    citesageDesc: "具備 Agentic 自學能力的自動化驗證系統，專為處理複雜文獻元資料與語義一致性設計。",
+    graphvizTitle: "學術級 Wiki 繪圖工具箱",
+    graphvizDesc: "為研究與設計教育打造，支援 SVG Graphviz 與 Noto Sans CJK 的專業級 Wiki 基礎設施。",
+    resourcesMenu: "資源選單",
+    refSection: "實作參考",
+    labSection: "相關資源",
+    step4: "步驟 04",
+    step4Title: "組件矩陣",
+    required: "必要",
+    core: "核心",
+    actionRequired: "需要後續操作",
+    previewTitle: "結構預覽",
+    previewDesc: "// 自動產生的目錄快照",
+    exportSetup: "匯出專案藍圖 OS",
+    exportTeardown: "匯出卸載清理 OS",
+    footerDesign: "設計於",
+    footerInfra: "基礎設施",
+    footerManagement: "知識管理",
+    footerDeployment: "部署網址",
+    academicRes: "學術研究環境",
+    aiKnowledge: "AI 輔助知識庫",
+    domainLabel: "專案領域",
+    domainGeneral: "通用（不限定領域）",
+  }
+};
+
+const ChipInput = ({ value, onChange, placeholder, icon }: { value: string, onChange: (val: string) => void, placeholder: string, icon: React.ReactNode }) => {
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const isComposing = React.useRef(false);
+  const chips = value.split(/\s+/).filter(Boolean);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // 忽略 IME 輸入法選字時的 Enter 或空白鍵
+    if (isComposing.current || e.nativeEvent.isComposing) return;
+
+    if (e.key === ' ' || e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = inputValue.trim();
+      if (val && !chips.includes(val)) {
+        onChange([...chips, val].join(' '));
+        setInputValue('');
+      } else if (val && chips.includes(val)) {
+        setInputValue('');
+      }
+    } else if (e.key === 'Backspace' && !inputValue && chips.length > 0) {
+      e.preventDefault();
+      const newChips = [...chips];
+      newChips.pop();
+      onChange(newChips.join(' '));
+    }
+  };
+
+  const removeChip = (indexToRemove: number) => {
+    const newChips = chips.filter((_, i) => i !== indexToRemove);
+    onChange(newChips.join(' '));
+  };
+
+  return (
+    <div className="relative group w-full" onClick={() => inputRef.current?.focus()}>
+      <div className="w-full pl-12 pr-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl flex flex-wrap items-center gap-2 focus-within:ring-4 focus-within:ring-blue-500/5 focus-within:border-blue-500 focus-within:bg-white transition-all cursor-text min-h-[50px]">
+        {/* Icon */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none flex items-center h-full">
+          {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-5 h-5 flex-shrink-0' })}
+        </div>
+
+        {/* Chips */}
+        {chips.map((chip, i) => (
+          <span key={i} className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 text-blue-700 font-bold text-xs rounded-full shadow-sm">
+            {chip}
+            <button
+              type="button"
+              onClick={() => removeChip(i)}
+              className="hover:bg-blue-200 rounded-full p-0.5 transition-colors focus:outline-none"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+        {/* Input */}
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onCompositionStart={() => { isComposing.current = true; }}
+          onCompositionEnd={() => { isComposing.current = false; }}
+          onBlur={() => {
+            const val = inputValue.trim();
+            if (val && !chips.includes(val)) {
+              onChange([...chips, val].join(' '));
+            }
+            setInputValue('');
+          }}
+          className="flex-1 min-w-[30px] max-w-full bg-transparent outline-none text-[13px] font-medium text-slate-900 placeholder:text-slate-300"
+          placeholder={chips.length === 0 ? placeholder : ""}
+        />
+      </div>
+    </div>
+  );
+};
 
 const MODULES = [
   {
     id: 'core_agents',
     category: 'Local Core & Workspace',
+    categoryZh: '本地核心與工作區',
     icon: <BrainCircuit className="w-5 h-5" />,
     name: 'Universal AGENTS.md',
+    nameZh: '通用 AGENTS.md',
     desc: 'Standardized Persona, Success Log, Decision Log, and Memory Schema.',
+    descZh: '標準化人格設定、成功記錄、決策日誌與記憶架構。',
     required: true,
   },
   {
     id: 'core_workflows',
     category: 'Local Core & Workspace',
+    categoryZh: '本地核心與工作區',
     icon: <Code2 className="w-5 h-5" />,
     name: 'Dynamic Start/End Workflows',
+    nameZh: '動態 Start/End 工作流',
     desc: 'Pre-configured state machine workflows for Agent Context Revival and Persistence.',
+    descZh: '預先配置的狀態機工作流，用於 Agent 上下文重啟與持久化。',
     required: true,
   },
   {
     id: 'infra_docker',
     category: 'Local Core & Workspace',
+    categoryZh: '本地核心與工作區',
     icon: <Layers className="w-5 h-5" />,
     name: 'Dockerized Workspace',
+    nameZh: 'Docker 化工作空間',
     desc: 'Mandatory isolated container environment (docker-compose) for the AI to work in.',
+    descZh: '強制隔離的容器環境 (docker-compose)，供 AI 在其中運行。',
     required: true,
   },
   {
     id: 'mem_lancedb',
     category: 'Local Data & Models',
+    categoryZh: '本地數據與模型',
     icon: <Database className="w-5 h-5" />,
     name: 'Local Vector Database (LanceDB)',
+    nameZh: '本地向量資料庫 (LanceDB)',
     desc: 'Serverless vector database. Injects lancedb, huggingface, and sentence-transformers to embed the local codebase.',
+    descZh: '無伺服器向量資料庫。整合 lancedb、huggingface 以嵌入本地代碼庫。',
     required: false,
   },
   {
     id: 'mem_ollama',
     category: 'Local Data & Models',
+    categoryZh: '本地數據與模型',
     icon: <Server className="w-5 h-5" />,
     name: 'Local LLM Engine (Ollama)',
+    nameZh: '本地 LLM 引擎 (Ollama)',
     desc: 'Deploys a local, isolated Ollama container for completely private AI generation.',
+    descZh: '部署本地隔離的 Ollama 容器，用於完全私密的 AI 生成。',
     required: false,
   },
   {
     id: 'env_academic',
     category: 'Local Data & Models',
+    categoryZh: '本地數據與模型',
     icon: <BookOpen className="w-5 h-5" />,
     name: 'Academic Research Environment',
+    nameZh: '學術研究環境',
     desc: 'Generates Dockerfile with LaTeX (TeXLive), Pandoc, and Python Data Science stack.',
+    descZh: '產出包含 LaTeX、Pandoc 與 Python 數據科學工具集的文件。',
     required: false,
   },
   {
     id: 'mem_cloud',
     category: 'Cloud & Remote Integrations',
+    categoryZh: '雲端與遠端整合',
     icon: <Database className="w-5 h-5" />,
     name: 'Cloud Drive Integration',
+    nameZh: '雲端硬碟整合',
     desc: 'Deploys rclone in Docker and generates LlamaIndex scripts (llama_drive_indexer.py) for persistent cloud file retrieval.',
+    descZh: '在 Docker 部署 rclone 並產出 LlamaIndex 腳本，用於雲端檔案檢索。',
     required: false,
-    prerequisites: ['Google Drive / OneDrive Account', 'Cloud API Credentials']
+    prerequisites: ['Google Drive / OneDrive Account', 'Cloud API Credentials'],
+    prerequisitesZh: ['Google Drive / OneDrive 帳號', '雲端 API 憑證']
   },
   {
     id: 'ci_git_hook',
     category: 'Cloud & Remote Integrations',
+    categoryZh: '雲端與遠端整合',
     icon: <Github className="w-5 h-5" />,
     name: 'Git Hook Automation',
+    nameZh: 'Git Hook 自動化',
     desc: 'Deploys gitleaks for secret scanning and creates a pre-push hook to guarantee vector memory sync before uploading.',
+    descZh: '部署 gitleaks 進行密鑰掃描，並建立 pre-push hook 確保上傳前同步。',
     required: false,
-    prerequisites: ['Remote Git Repository (e.g., GitHub / Gitea)']
+    prerequisites: ['Remote Git Repository (e.g., GitHub / Gitea)'],
+    prerequisitesZh: ['遠端 Git 倉庫 (例如 GitHub / Gitea)']
   },
   {
     id: 'ci_python_tools',
     category: 'Local Data & Models',
+    categoryZh: '本地數據與模型',
     icon: <Wrench className="w-5 h-5" />,
     name: 'Python Tooling (uv, pytest, ruff)',
+    nameZh: 'Python 工具鏈 (uv, pytest, ruff)',
     desc: 'Generates pyproject.toml and a tests/ envelope for strict code quality and unit testing.',
+    descZh: '產生 pyproject.toml 與 tests/ 目錄，用於嚴格代碼品質控管。',
     required: false,
   },
   {
     id: 'ci_testing_matrix',
     category: 'Cloud & Remote Integrations',
+    categoryZh: '雲端與遠端整合',
     icon: <ShieldCheck className="w-5 h-5" />,
     name: 'Full Coverage Testing Matrix',
+    nameZh: '全覆蓋測試矩陣',
     desc: 'Installs bats and shellcheck. Automates Python Testinfra (container state) and Bats (shell script behavior).',
+    descZh: '安裝 bats 與 shellcheck，自動化 Python 與 Shell 腳本測試。',
     required: false,
   },
   {
     id: 'infra_gateway',
     category: 'Public Infrastructure (VPS)',
+    categoryZh: '公用基礎設施 (VPS)',
     icon: <Server className="w-5 h-5" />,
     name: 'Edge Gateway (Caddy)',
+    nameZh: '邊緣網關 (Caddy)',
     desc: 'Caddyfile proxy template with Academic Bot whitelist and rate-limiting.',
+    descZh: '具備學術機器人白名單與速率限制的 Caddyfile 代理範本。',
     required: false,
-    prerequisites: ['Public Domain Name', 'Public IP Address (VPS)']
+    prerequisites: ['Public Domain Name', 'Public IP Address (VPS)'],
+    prerequisitesZh: ['公用網域名稱', '公用 IP 地址 (VPS)']
   },
   {
     id: 'infra_watchdog',
     category: 'Public Infrastructure (VPS)',
+    categoryZh: '公用基礎設施 (VPS)',
     icon: <Server className="w-5 h-5" />,
     name: 'Self-Healing Watchdog',
+    nameZh: '自我修護看門狗',
     desc: 'Autonomous crontab script that checks HTTP endpoints and restarts frozen containers.',
+    descZh: '自動化的 crontab 腳本，檢查端點並重啟假死的容器。',
     required: false,
-    prerequisites: ['Public Domain Name']
+    prerequisites: ['Public Domain Name'],
+    prerequisitesZh: ['公用網域名稱']
   },
   {
     id: 'infra_iac',
     category: 'Public Infrastructure (VPS)',
+    categoryZh: '公用基礎設施 (VPS)',
     icon: <Code2 className="w-5 h-5" />,
     name: 'IaC Deployment (Ansible)',
+    nameZh: 'IaC 部署 (Ansible)',
     desc: 'Generates Ansible playbooks and deploy.sh for remote server synchronized updates and crontab management.',
+    descZh: '產生 Ansible playbooks 用於遠端伺服器同步更新與排程管理。',
     required: false,
-    prerequisites: ['SSH Access to VPS']
+    prerequisites: ['SSH Access to VPS'],
+    prerequisitesZh: ['VPS 的 SSH 存取限權']
   },
   {
     id: 'mem_digest',
     category: 'Local Data & Models',
+    categoryZh: '本地數據與模型',
     icon: <Database className="w-5 h-5" />,
     name: 'Conversation Digest',
+    nameZh: '對話紀實摘要',
     desc: 'Python utility to extract, summarize, and archive long-running agent conversation logs.',
+    descZh: '用於提取、摘要並封存長期的 Agent 對話日誌之 Python 工具。',
     required: false,
+  },
+  {
+    id: 'context_bundler',
+    category: 'Local Data & Models',
+    categoryZh: '本地數據與模型',
+    icon: <Monitor className="w-5 h-5" />,
+    name: 'Context Bundler',
+    nameZh: '本機上下文打包器',
+    desc: 'Generates CONTEXT_SNAPSHOT.md before each session — git state, LanceDB results, and decision log — so the AI starts with full context without any cloud LLM call.',
+    descZh: '每次 session 開始前自動打包 git 狀態、LanceDB 語意搜尋與決策日誌，讓 AI 不需要呼叫雲端 LLM 就能理解專案現況。',
+    required: false,
+  },
+  {
+    id: 'response_cache',
+    category: 'Local Data & Models',
+    categoryZh: '本地數據與模型',
+    icon: <Database className="w-5 h-5" />,
+    name: 'Response Cache',
+    nameZh: '本機回應快取',
+    desc: 'SQLite-based local Q&A cache with semantic similarity search. Answered questions never hit the cloud again.',
+    descZh: '以 SQLite 在本機快取 LLM 問答，語意相似的問題直接從本機返回，相同問題不再呼叫雲端。',
+    required: false,
+  },
+  {
+    id: 'edu_submission',
+    category: 'Cloud & Remote Integrations',
+    categoryZh: '雲端與遠端整合',
+    icon: <BookCheck className="w-5 h-5" />,
+    name: 'Student Submission Toolchain',
+    nameZh: '學生作業自動繳交工具鏈',
+    desc: 'Equips the AI with strict validation prompts and a resilient upload script for submitting large assignment files to the professors Drive.',
+    descZh: '賦予 AI 嚴格的驗證提示與強韌的上傳腳本，用以將巨型作業檔案提交至老師的雲端資料夾。',
+    required: false,
+    prerequisites: ['Homework API Endpoint'],
+    prerequisitesZh: ['繳交作業 API 網址']
   }
 ];
 
@@ -130,12 +428,17 @@ function App() {
 
   const [config, setConfig] = useState({
     projectName: 'My AI Project',
-    authorName: 'Developer',
+    userRole: 'Researcher Developer',
+    aiRole: 'System_Architect Specialist',
     domain: 'example.com',
   });
 
   const [deploymentScope, setDeploymentScope] = useState<'local' | 'server' | 'full'>('local');
   const [actionType, setActionType] = useState<'install' | 'uninstall'>('install');
+
+  const [language, setLanguage] = useState<'en' | 'zh'>('en');
+  const [selectedDomain, setSelectedDomain] = useState<string>('');
+  const t = TRANSLATIONS[language];
 
   const toggleModule = (id: string, required: boolean) => {
     if (required) return;
@@ -155,12 +458,16 @@ function App() {
 
   const getVisibleCategories = () => {
     if (actionType === 'uninstall') return Object.keys(categories);
-    if (deploymentScope === 'local') return ['Local Core & Workspace'];
-    if (deploymentScope === 'server') return ['Local Core & Workspace', 'Public Infrastructure (VPS)'];
+    if (deploymentScope === 'local') return ['Local Core & Workspace', 'Local Data & Models'];
+    if (deploymentScope === 'server') return ['Local Core & Workspace', 'Local Data & Models', 'Public Infrastructure (VPS)'];
     return Object.keys(categories);
   };
 
   const visibleCategoryList = getVisibleCategories();
+
+  const toggleLanguage = () => {
+    setLanguage(prev => prev === 'en' ? 'zh' : 'en');
+  };
 
   const isModuleActive = (id: string) => {
     const mod = MODULES.find(m => m.id === id);
@@ -174,6 +481,7 @@ function App() {
     setActionType(newType);
     if (newType === 'uninstall') {
       setSelectedModules({}); // Clear selections so nothing is uninstalled by accident
+      setSelectedDomain('');  // Reset domain when switching to uninstall
     } else {
       setSelectedModules(prev => {
         const next = { ...prev };
@@ -187,454 +495,341 @@ function App() {
 
   const generateZip = async () => {
     const zip = new JSZip();
-    const safeProjectName = config.projectName.replace(/\s+/g, '_');
+    const projectConfig: ProjectConfig = { ...config, deploymentScope, selectedDomain: selectedDomain || undefined };
+    const safeProjectName = getSafeProjectName(projectConfig);
     const folderName = actionType === 'uninstall' ? `teardown_${safeProjectName}` : safeProjectName;
     const folder = zip.folder(folderName);
     if (!folder) return;
 
-    if (actionType === 'uninstall') {
-      let teardownMd = `# UNINSTALL_TEARDOWN.md — ${config.projectName}\n\n`;
-      teardownMd += `> **⚠️ CRITICAL WARNING**: Your current mission is to SAFELY UNINSTALL specific modules. You MUST NOT delete any source code, user databases, or unrelated configurations. You must adhere strictly to the target list.\n\n`;
-      teardownMd += `## System Architecture Context\n- Target Environment: ${deploymentScope === 'local' ? 'Local Development Workspace' : config.domain}\n\n`;
-      teardownMd += `## 🗑️ Teardown Instructions\nAttention AI Agent: Execute the following cleanup steps sequentially. Be extremely careful not to use destructive flags like \`rm -rf /\` or \`docker-compose down -v\` unless explicitly instructed.\n\n`;
-
-      if (isModuleActive('infra_docker') || true) {
-        teardownMd += `### 1. Docker Cleanup\n- **Action**: Run \`docker compose down\` to stop and remove containers and networks.\n- **Safety Hook**: DO NOT USE the \`-v\` flag. We want to preserve database volumes.\n- **Action**: Delete \`docker-compose.yml\` and \`Dockerfile\`.\n\n`;
-      }
-      if (isModuleActive('ci_git_hook')) {
-        teardownMd += `### 2. Git Hooks Cleanup\n- **Action**: Remove the pre-push hook at \`.git/hooks/pre-push\` to detach the gitleaks and memory sync logic.\n\n`;
-      }
-      if (isModuleActive('mem_cloud') || isModuleActive('mem_lancedb')) {
-        teardownMd += `### 3. Knowledge Base Cleanup\n`;
-        teardownMd += `- **Action**: Carefully delete \`scripts/ingest.py\`, \`scripts/query.py\`, and \`scripts/llama_drive_indexer.py\` if they exist.\n`;
-        teardownMd += `- **Action**: Remove the hidden LanceDB database folder (e.g., \`.lancedb/\`).\n`;
-        teardownMd += `- **Dependencies**: Remove \`lancedb\`, \`langchain\`, \`sentence-transformers\` from \`pyproject.toml\`. DO NOT delete the entire \`pyproject.toml\` file.\n\n`;
-      }
-      if (isModuleActive('ci_testing_matrix')) {
-        teardownMd += `### 4. Testing Matrix Cleanup\n- **Action**: Delete \`tests/shell/\` and \`tests/infra/\` directories.\n- **Action**: Delete \`scripts/system/test_matrix.sh\`.\n\n`;
-      }
-      if (isModuleActive('infra_gateway')) {
-        teardownMd += `### 5. Edge Gateway Cleanup\n- **Action**: Delete \`config/caddy/Caddyfile\`.\n\n`;
-      }
-      if (isModuleActive('infra_watchdog') || isModuleActive('infra_iac') || isModuleActive('mem_digest')) {
-        teardownMd += `### 6. System Scripts Cleanup\n- **Action**: Delete \`scripts/system/watchdog.sh\`, \`scripts/system/deploy.sh\`, \`scripts/system/conversation_digest.py\`.\n- **Action**: Delete the \`ansible/\` directory.\n\n`;
-      }
-      if (isModuleActive('mem_ollama')) {
-        teardownMd += `### 7. Ollama Local LLM Cleanup\n- **Action**: Remove the \`ollama\` service block and \`ollama_data\` volume from \`docker-compose.yml\`.\n- **Action**: Stop and remove the \`${safeProjectName.toLowerCase().replace(/_/g, '-')}-ollama\` container.\n- **Safety Hook**: Ask the user before deleting the \`ollama_data\` volume because it contains gigabytes of downloaded models.\n\n`;
-      }
-      teardownMd += `### 8. Core Workflows Cleanup\n- **Action**: Delete \`.agents/workflows/start.md\` and \`.agents/workflows/end.md\`.\n\n`;
-      teardownMd += `### 9. Final Self-Destruct Sequence\n- **Action**: Once all the above steps are verified and complete, you MUST permanently delete this \`UNINSTALL_TEARDOWN.md\` file from the disk to prevent human misclicks in the future.\n`;
-
-      folder.file("UNINSTALL_TEARDOWN.md", teardownMd);
-    } else {
-      // Core AGENTS.md
-      let agentsMd = `# AGENTS.md — ${config.projectName}\n\n`;
-      agentsMd += `> **Format Standard**: [AGENTS.md Open Standard](https://agents.md)\n\n`;
-      agentsMd += `## AI Persona\n- You are the AI Assistant assigned to ${config.projectName}.\n- Address the user as: ${config.authorName}.\n- Language: Traditional Chinese (Taiwan), unless specified otherwise.\n\n`;
-
-      if (deploymentScope === 'server' || deploymentScope === 'full') {
-        agentsMd += `## System Architecture\n- Domain: ${config.domain}\n- Core configuration source of truth is the local \`config/\` directory.\n\n`;
-      } else {
-        agentsMd += `## System Architecture\n- Environment: Local Development Workspace\n- Core configuration source of truth is the local \`config/\` directory.\n\n`;
-      }
-
-      agentsMd += `## Workspace & Execution Rules\n- **CRITICAL**: All code execution, compilation, and file modifications MUST be performed entirely inside the Docker container environment. Do not install packages or run scripts on the bare metal host.\n`;
-      agentsMd += `- **PROACTIVE SETUP**: Upon first reading this repository, immediately scan for \`SETUP.md\` or \`docker-compose.yml\` and autonomously initiate setup commands. **⚠️ CRITICAL: Check if the environment is already running first (via \`docker ps\` or checking for \`.venv\`). DO NOT OVERWRITE or reinstall if the system is already configured.**\n`;
-      agentsMd += `- **AUTONOMOUS SELF-HEALING & ADAPTATION**: If you encounter missing dependencies, version incompatibilities, or script errors, do not immediately give up or wait for the user. Proactively read the logs, adapt to the user's existing local OS/environment (e.g., fallback tools), and attempt to self-heal or pivot to a viable alternative up to 3 times before raising a fatal error.\n`;
-      agentsMd += `- **SCRIPT ENCAPSULATION**: For repetitive server operations, backups, or complex setups, do not rely on one-off disposable terminal commands. Autonomously encapsulate them into reusable Shell or Python scripts inside the \`scripts/\` directory to ensure reproducibility.\n\n`;
-      agentsMd += `## Security & Memory Boundaries\n- **Never write**: API Keys, Tokens, Passwords, unredacted PII.\n- **Safe to write**: Hashes, Fingerprints, reference paths, and system variable names.\n\n`;
-      agentsMd += `## Success Log\n- ${new Date().toISOString().split('T')[0]} : Initialized project persistent memory via AI Memory OS Blueprint.\n\n`;
-      agentsMd += `## Decision Log\n> Every decision must include this minimum schema.\n\n| Date | Scope | Decision | Confidence | Provenance | Review_after | Status | Conflict_with | Superseded_by |\n|---|---|---|---|---|---|---|---|---|\n| ${new Date().toISOString().split('T')[0]} | infra | Initialized Blueprint OS | high | Generator | - | Active | - | - |\n\n`;
-      agentsMd += `## Roadmap\n- [ ] Analyze codebase, follow \`SETUP.md\` instructions, and Flesh out any uncompleted stubs inside the \`scripts/\` directory.\n`;
-      folder.file("AGENTS.md", agentsMd);
-
-      // Initial Setup Instructions (SETUP.md)
-      let setupMd = `# First Time Setup Guide\n\nWelcome to your new AI Memory OS workspace! As your AI coding assistant, I will autonomously help you set up this environment.\n\n`;
-      setupMd += `## 🤖 AI Dynamic Auto-Execution Protocol\n**Attention AI Agent:** You must proactively execute the commands in the \`Installation\` section below. \n- **Verification First (Zero-Destruct Policy)**: Before running ANY setup commands, you MUST test if the system is already configured. The bash commands below have built-in safety checks, but you must remain vigilant and never overwrite an existing working state.\n- **Autonomous Debugging & Adaptation**: If any command fails, or if a specific tool (like \`uv\`) is missing on the user's host machine, DO NOT abruptly halt. Autonomously read the error log and adapt to the user's system (e.g., fallback to \`pip\`, or install the missing tool) to self-heal the process before asking for human intervention.\n\n`;
-
-      setupMd += `## 🛠️ Installation\nPlease run the following commands sequentially to bring up the environment (if not already running):\n\`\`\`bash\n`;
-      if (isModuleActive('infra_docker') || true) {
-        setupMd += `# 1. Start the container\nif ! docker ps | grep -q "${safeProjectName.toLowerCase().replace(/_/g, '-')}-workspace"; then\n  docker compose up -d --build\nelse\n  echo "Docker environment already running."\nfi\n\n`;
-      }
-      if (isModuleActive('ci_python_tools') || isModuleActive('ci_testing_matrix')) {
-        setupMd += `# 2. Configure Python environment INSIDE the container\n`;
-        setupMd += `docker exec -it ${safeProjectName.toLowerCase().replace(/_/g, '-')}-workspace bash -c "`;
-        setupMd += `if [ ! -d '.venv' ]; then uv venv; fi && source .venv/bin/activate`;
-        if (isModuleActive('ci_python_tools')) setupMd += ` && uv pip install -e .[dev]`;
-        if (isModuleActive('ci_testing_matrix')) setupMd += ` && uv pip install pytest-testinfra`;
-        setupMd += `"\n`;
-      }
-      if (isModuleActive('mem_ollama')) {
-        setupMd += `# 3. Initialize Local LLM (Ollama)\n`;
-        setupMd += `docker exec -it ${safeProjectName.toLowerCase().replace(/_/g, '-')}-ollama ollama pull gemma:2b\n\n`;
-      }
-      setupMd += `\`\`\`\n\n`;
-
-      if (isModuleActive('ci_git_hook') || isModuleActive('infra_gateway') || isModuleActive('mem_cloud')) {
-        setupMd += `## 🔑 Prerequisites Checklist\nPlease ensure we have the following accounts and credentials prepared:\n\n`;
-      }
-
-      if (isModuleActive('ci_git_hook')) {
-        setupMd += `### 1. Remote Git Repository (GitHub / Gitea)\n- **Why:** Required for version control and the automated pre-push memory sync.\n- **Human Action:** Please create an empty repository on GitHub or your local Gitea server and provide me with the clone URL.\n- **AI Action:** I will execute \`git init\`, \`git remote add origin <URL>\`, and \`git push -u origin main\`.\n\n`;
-      }
-
-      if (isModuleActive('mem_cloud')) {
-        setupMd += `### 2. Cloud Storage API (Google Drive / OneDrive)\n- **Why:** Required for integrating persistent cloud documents into our local memory vector database.\n- **Human Action:** Please go to the Google Cloud Console (or Azure Portal) and create an OAuth Client ID/Secret. Download the \`credentials.json\` file and place it in the \`config/\` directory.\n- **AI Action:** Once provided, I will run the Rclone authorization flow and configure LlamaIndex targeting the mounted container.\n\n`;
-      }
-
-      if (isModuleActive('infra_gateway') || isModuleActive('infra_watchdog')) {
-        setupMd += `### 3. Public Domain & VPS Infrastructure\n- **Why:** Required for Edge Gateway routing and uptime monitoring.\n- **Human Action:** Please ensure your domain (or IP) \`${config.domain}\` points to your server. Make sure port 80 (and 443 if using a domain) is open on your VPS firewall.\n- **AI Action:** I will deploy the \`docker-compose.yml\` gateway service and start Caddy.\n\n`;
-      }
-
-      setupMd += `***\n\n**To the Human User:** Please read the prerequisites checklist (if any). Provide me with the necessary repository URLs or credentials, and I will handle the rest!\n`;
-      folder.file("SETUP.md", setupMd);
-
-      // Core Workflows
-      let startWf = `---\ndescription: Initialize project memory and context retrieval\n---\n1. **Environment Audit (Phase 0)**: Determine if greenfield or existing. Actively identify existing configurations and strictly avoid destructive interference. If modernized tools (e.g. \`pytest\`) are missing, perform an in-place upgrade.\n2. **Verify Subsystems**: Run \`docker ps\` and syntax checks to ensure the system is healthy before modifying code.\n3. **Read AGENTS.md**: Rigidly internalize the project's Core Rules, Success Log, Decision Log, and Roadmap.\n4. **Perform Semantic Search**: Extract Historical Habits and past debugging experiences to form an ultra-strong context.\n5. **Dynamic Planning & Adaptation**: Autonomously determine the task complexity. If low, jump to EXECUTION. If high, write a defensive plan. If the environment requires adaptation, adjust your toolchain strategy immediately.\n6. **Report readiness** to the user.\n`;
-      let endWf = `---\ndescription: Conversation end memory persistence and evidence logging\n---\n1. **Self-Reflection**: Review newly created shell scripts, solutions, or resolved bugs (Phase 4), ensuring they adhere to the Encapsulation Rule.\n2. **Memory Reconsolidation & Pruning**: Execute stringently: Versioning & Dedup, Conflict Resolution (mark Superseded_by), Weighting, and Quality Filter.\n3. **Clean Workspace**: Proactively wipe all temporary testing rubbish inside \`/tmp\` or the workspace.\n4. **Update AGENTS.md**: Condense newly invented solutions and critical bugs into the Decision Log following the Minimum Schema (Scope, Confidence, Provenance).\n5. **Git Hygiene & Push**: Write descriptive Commit Messages, execute Git push, and trigger the pre-push hook for permanent vector indexing.\n6. **Confirm memory persistence** to the user.\n`;
-
-      folder.folder(".agents")?.folder("workflows")?.file("start.md", startWf);
-      folder.folder(".agents")?.folder("workflows")?.file("end.md", endWf);
-
-      // LanceDB
-      if (isModuleActive('mem_lancedb')) {
-        let ingestPy = `"""Index project files into LanceDB"""\nimport lancedb\nfrom pathlib import Path\nfrom langchain_huggingface import HuggingFaceEmbeddings\nfrom langchain_text_splitters import RecursiveCharacterTextSplitter\n\n# ... Implement LanceDB ingest logic here ...\nprint("✅ Indexed chunks")\n`;
-        let queryPy = `"""Semantic search for LanceDB KB"""\nimport sys, lancedb\nfrom pathlib import Path\nfrom langchain_huggingface import HuggingFaceEmbeddings\n\n# ... Implement LanceDB query logic here ...\n`;
-        folder.folder("scripts")?.file("ingest.py", ingestPy);
-        folder.folder("scripts")?.file("query.py", queryPy);
-      }
-
-      // Git Hook
-      if (isModuleActive('ci_git_hook')) {
-        let prePush = `#!/bin/bash\necho "🔒 Running GitLeaks check..."\ndocker exec ${safeProjectName.toLowerCase().replace(/_/g, '-')}-workspace gitleaks detect --source /workspace --no-git || {\n  echo "❌ GitLeaks detected potentially exposed secrets! Aborting push."\n  exit 1\n}\n\necho "🧠 Syncing knowledge base (Incremental update)..."\n# Must run ingestion inside the container\ndocker exec ${safeProjectName.toLowerCase().replace(/_/g, '-')}-workspace bash -c "source .venv/bin/activate && python scripts/ingest.py"\nif [ $? -ne 0 ]; then\n  echo "❌ Knowledge base indexing failed!"\n  exit 1\nfi\necho "✅ Knowledge base updated"\n`;
-        folder.folder(".git")?.folder("hooks")?.file("pre-push", prePush);
-      }
-
-      // Python Tooling
-      if (isModuleActive('ci_python_tools')) {
-        let pyprojectToml = `[project]\nname = "${safeProjectName.toLowerCase().replace(/_/g, '-')}"\nversion = "0.1.0"\ndescription = "AI Generated Project"\nauthors = [{name = "${config.authorName}"}]\nrequires-python = ">=3.10"\n`;
-        let deps = [];
-        if (isModuleActive('mem_lancedb')) deps.push('"lancedb>=0.5.0"', '"langchain>=0.1.0"', '"langchain-huggingface>=0.0.1"', '"sentence-transformers>=2.0.0"');
-        if (isModuleActive('mem_llamaindex')) deps.push('"llama-index>=0.10.0"');
-
-        pyprojectToml += `dependencies = [\n    ${deps.join(',\\n    ')}\n]\n\n[project.optional-dependencies]\ndev = [\n    "pytest>=8.0.0",\n    "pytest-cov>=4.1.0",\n    "ruff>=0.3.0"\n]\n\n[tool.ruff]\nline-length = 120\n\n[tool.pytest.ini_options]\ntestpaths = ["tests"]\npython_files = "test_*.py"\n`;
-        folder.file("pyproject.toml", pyprojectToml);
-
-        let testBasicPy = `import pytest\n\ndef test_environment_ready():\n    """Verify testing matrix is operational."""\n    assert True\n`;
-        folder.folder("tests")?.file("test_basic.py", testBasicPy);
-      }
-
-      // Cloud Big Data Sync
-      if (isModuleActive('mem_cloud')) {
-        let llamaDrivePy = `"""Sync cloud documents into local persistent vector search"""\nfrom llama_index.readers.google import GoogleDriveReader\nfrom llama_index.embeddings.huggingface import HuggingFaceEmbedding\n\ndef sync_cloud():\n    # Use private credentials to avoid shared rate limits\n    # Requires placing 'credentials.json' inside config/\n    try:\n        loader = GoogleDriveReader(client_secrets_path="config/credentials.json")\n        documents = loader.load_data(folder_id="YOUR_ROOT_FOLDER_ID")\n        print(f"✅ Loaded {len(documents)} documents from cloud")\n        # Index into LanceDB (Layer 2) going forward...\n    except Exception as e:\n        print(f"❌ Cloud sync error: {e}")\n\nif __name__ == '__main__':\n    sync_cloud()\n`;
-        folder.folder("scripts")?.file("llama_drive_indexer.py", llamaDrivePy);
-      }
-
-      // Testing Matrix (Bats, Testinfra)
-      if (isModuleActive('ci_testing_matrix')) {
-        let testMatrixSh = `#!/bin/bash\n# Full Coverage Testing Matrix\nif [ ! -f /.dockerenv ]; then\n  echo "❌ CRITICAL: This script must be run INSIDE the Docker container!"\n  exit 1\nfi\n\necho "Running Shellcheck..."\nfind scripts/ -type f -name "*.sh" -exec shellcheck {} +\n\necho "Running Python Unit Tests..."\npytest tests/\n\necho "Running Bats Core Tests..."\nbats tests/shell/\n\necho "Running Docker Testinfra Validation..."\npytest tests/infra/\n\necho "✅ Matrix Passed"\n`;
-        folder.folder("scripts")?.folder("system")?.file("test_matrix.sh", testMatrixSh);
-
-        let testInfraPy = `import testinfra\n\ndef test_local_socket_listening(host):\n    """Verify internal container state and active services."""\n    # e.g., assert host.socket("tcp://0.0.0.0:8000").is_listening\n    assert True\n`;
-        folder.folder("tests")?.folder("infra")?.file("test_infra.py", testInfraPy);
-
-        let batsTest = `#!/usr/bin/env bats\n\n@test "Syntax check scripts" {\n    run bash -n scripts/system/test_matrix.sh\n    [ "$status" -eq 0 ]\n}\n`;
-        folder.folder("tests")?.folder("shell")?.file("test_scripts.bats", batsTest);
-      }
-
-      // IP Validation Helper
-      const isIpAddress = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(config.domain);
-      const protocol = isIpAddress ? 'http' : 'https';
-
-      // Caddyfile
-      if (isModuleActive('infra_gateway')) {
-        let caddyHost = isIpAddress ? `http://${config.domain}` : config.domain;
-        let caddyfile = `${caddyHost} {\n  # Academic Bot Whitelist\n  @bots {\n    header User-Agent *Googlebot*\n    header User-Agent *GPTBot*\n    header User-Agent *ClaudeBot*\n  }\n  \n  reverse_proxy workspace:8080\n}\n`;
-        folder.folder("config")?.folder("caddy")?.file("Caddyfile", caddyfile);
-      }
-
-      // Dockerized Workspace Structure
-      if (isModuleActive('infra_docker') || true) { // Always evaluated, it's required
-        let compose = `services:\n  workspace:\n    container_name: ${safeProjectName.toLowerCase().replace(/_/g, '-')}-workspace\n    build: .\n    image: ${safeProjectName.toLowerCase().replace(/_/g, '-')}-env\n`;
-        compose += `    volumes:\n      - .:/workspace\n    working_dir: /workspace\n    command: sleep infinity\n    restart: unless-stopped\n    deploy:\n      resources:\n        limits:\n          memory: 2G\n`;
-
-        if (isModuleActive('infra_gateway')) {
-          // Expose port if needed for Caddy integration
-          compose += `\n  gateway:\n    image: caddy:alpine\n    ports:\n      - "80:80"\n      - "443:443"\n    volumes:\n      - ./config/caddy/Caddyfile:/etc/caddy/Caddyfile\n    restart: unless-stopped\n`;
-        }
-
-        if (isModuleActive('mem_ollama')) {
-          compose += `\n  ollama:\n    image: ollama/ollama\n    container_name: ${safeProjectName.toLowerCase().replace(/_/g, '-')}-ollama\n    ports:\n      - "11434:11434"\n    volumes:\n      - ollama_data:/root/.ollama\n    restart: unless-stopped\n`;
-        }
-
-        if (isModuleActive('mem_ollama')) {
-          compose += `\nvolumes:\n  ollama_data:\n`;
-        }
-
-        folder.file("docker-compose.yml", compose);
-      }
-
-      let dockerfile = `FROM ubuntu:24.04\n\nENV DEBIAN_FRONTEND=noninteractive\n\nRUN apt-get update && apt-get install -y \\\n    curl \\\n    git \\\n    python3-pip \\\n    python3-venv \\\n`;
-      if (isModuleActive('env_academic')) {
-        dockerfile += `    texlive-full \\\n    pandoc \\\n`;
-      }
-      if (isModuleActive('ci_testing_matrix')) {
-        dockerfile += `    bats \\\n    shellcheck \\\n`;
-      }
-      if (isModuleActive('mem_cloud')) {
-        dockerfile += `    rclone \\\n`;
-      }
-      if (isModuleActive('ci_git_hook')) {
-        dockerfile += `    gitleaks \\\n`;
-      }
-      dockerfile += `    && rm -rf /var/lib/apt/lists/*\n\n# Safely install uv globally\nRUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/usr/local/bin" sh\n\nWORKDIR /workspace\n`;
-      folder.file("Dockerfile", dockerfile);
-
-      // Watchdog
-      if (isModuleActive('infra_watchdog')) {
-        let watchdog = `#!/bin/bash\n# Self-Healing Watchdog\n# Checks endpoints and restarts frozen docker containers\n\nTARGET="${protocol}://${config.domain}"\nCONTAINER="${safeProjectName.toLowerCase().replace(/_/g, '-')}-workspace"\n\nif ! curl -s --head  --request GET "$TARGET" | grep "200" > /dev/null; then\n  echo "Endpoint dead. Restarting container..."\n  docker restart "$CONTAINER"\nfi\n`;
-        folder.folder("scripts")?.folder("system")?.file("watchdog.sh", watchdog);
-      }
-
-      // IaC Ansible
-      if (isModuleActive('infra_iac')) {
-        let deploySh = `#!/bin/bash\n# Deploy configuration to staging/production\necho "Pushing changes via Ansible..."\nansible-playbook -i ansible/inventory.ini ansible/playbooks/update_scripts.yml\n`;
-        folder.folder("scripts")?.folder("system")?.file("deploy.sh", deploySh);
-
-        let inventory = `[production]\n${config.domain} ansible_user=root\n`;
-        folder.folder("ansible")?.file("inventory.ini", inventory);
-
-        let playbook = `---\n- name: Update Crontabs and Scripts\n  hosts: production\n  tasks:\n    - name: Ensure watchdog is in crontab\n      ansible.builtin.cron:\n        name: "Self-healing watchdog"\n        minute: "*/5"\n        job: "cd /opt/${safeProjectName.toLowerCase().replace(/_/g, '-')} && ./scripts/system/watchdog.sh > /dev/null 2>&1"\n`;
-        folder.folder("ansible")?.folder("playbooks")?.file("update_scripts.yml", playbook);
-      }
-
-      // Conversation Digest
-      if (isModuleActive('mem_digest')) {
-        let digestPy = `"""Extract and summarize Agent conversation logs"""\nimport json, os, datetime\n\ndef generate_digest(log_path):\n    # TODO: Implement LLM summarization of log history\n    print(f"✅ Generated daily digest for {datetime.date.today()}")\n\nif __name__ == '__main__':\n    generate_digest('.agents/logs')\n`;
-        folder.folder("scripts")?.folder("system")?.file("conversation_digest.py", digestPy);
-      }
-
-    }
+    assembleZipContent(folder, projectConfig, isModuleActive, actionType);
 
     const content = await zip.generateAsync({ type: "blob" });
     saveAs(content, actionType === 'uninstall' ? `${safeProjectName}_Teardown_OS.zip` : `${safeProjectName}_Blueprint_OS.zip`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8 flex flex-col items-center font-sans text-gray-800">
+    <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-12 flex flex-col items-center font-sans text-slate-800">
+      <div className="max-w-6xl w-full mb-10 flex flex-col sm:flex-row justify-between items-center sm:items-end gap-6">
+        <div className="flex items-center gap-4 group">
+          <div className={`p-2.5 rounded-xl shadow-sm transition-all duration-500 ${actionType === 'install' ? 'bg-blue-600 text-white shadow-blue-200' : 'bg-red-600 text-white shadow-red-200'}`}>
+            <BrainCircuit className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-none mb-1">{t.title}</h1>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-[0.2em]">{actionType === 'install' ? t.subtitleSetup : t.subtitleTeardown}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-black text-slate-600 bg-white border border-slate-200 rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-blue-400 hover:text-blue-600 transition-all duration-300 group"
+          >
+            <Languages className="w-4 h-4 transition-transform group-hover:rotate-12" />
+            {language === 'en' ? '繁體中文' : 'English'}
+          </button>
+          <div className="w-px h-6 bg-slate-200 mx-1"></div>
+
+          {/* Resources Dropdown */}
+          <div className="relative group">
+            <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-blue-400 hover:text-blue-600 transition-all duration-300">
+              <LayoutGrid className="w-4 h-4" />
+              {t.resourcesMenu}
+            </button>
+
+            {/* Dropdown Panel - Adds a transparent bridge block right under the button to prevent hover gap */}
+            <div className="absolute right-0 top-full pt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform origin-top-right group-hover:translate-y-0 translate-y-2">
+              <div className="bg-white/90 backdrop-blur-xl border border-white/40 shadow-[0_10px_40px_rgba(0,0,0,0.08)] rounded-2xl p-2 flex flex-col gap-1">
+
+                {/* Reference Section */}
+                <div className="px-3 py-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{t.refSection}</span>
+                </div>
+                <a href="https://github.com/chenweichiang/citesage" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 transition-colors group/item">
+                  <div className="bg-blue-50 text-blue-600 p-1.5 rounded-lg group-hover/item:bg-blue-600 group-hover/item:text-white transition-colors">
+                    <BookCheck className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-slate-700 leading-tight">CiteSage</div>
+                  </div>
+                </a>
+                <a href="https://github.com/chenweichiang/MediaWiki-Academic-Graphviz" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 transition-colors group/item">
+                  <div className="bg-purple-50 text-purple-600 p-1.5 rounded-lg group-hover/item:bg-purple-600 group-hover/item:text-white transition-colors">
+                    <Network className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-slate-700 leading-tight">Wiki Graphviz</div>
+                  </div>
+                </a>
+
+                <div className="h-px bg-slate-100 my-1 mx-2"></div>
+
+                {/* Lab links */}
+                <div className="px-3 py-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{t.labSection}</span>
+                </div>
+                <a href="https://interaction.tw/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 text-sm font-medium text-slate-600 transition-colors">
+                  <Home className="w-4 h-4 text-slate-400" />
+                  {t.labSite}
+                </a>
+                <a href="https://wiki.interaction.tw/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 text-sm font-medium text-slate-600 transition-colors">
+                  <Library className="w-4 h-4 text-slate-400" />
+                  {t.wiki}
+                </a>
+                <a href="https://github.com/chenweichiang/AI-memory-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 text-sm font-medium text-slate-600 transition-colors">
+                  <Github className="w-4 h-4 text-slate-400" />
+                  {t.github}
+                </a>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-6xl w-full grid grid-cols-1 xl:grid-cols-12 gap-8 flex-grow">
 
-        {/* Left Sidebar - Options */}
-        <div className="xl:col-span-5 flex flex-col gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex flex-col gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                <BrainCircuit className="w-8 h-8 text-blue-600" />
-                <h1 className="text-2xl font-bold tracking-tight">AI Memory OS</h1>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <a href="https://interaction.tw/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors">
-                  <Home className="w-3.5 h-3.5" />
-                  Lab Site
-                </a>
-                <a href="https://wiki.interaction.tw/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors">
-                  <Library className="w-3.5 h-3.5" />
-                  Wiki
-                </a>
-                <a href="https://github.com/chenweichiang/AI-memory-os" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors">
-                  <Github className="w-3.5 h-3.5" />
-                  GitHub
-                </a>
-              </div>
+        <div className="xl:col-span-5 flex flex-col gap-8">
+          <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)]">
+            <div className="text-sm text-slate-500 mb-6 space-y-4 leading-relaxed">
+              <p className="font-medium text-slate-600">{t.introTitle}</p>
+              <p>{t.introDesc}</p>
+              <p className="text-slate-400 italic text-[13px]">{actionType === 'install' ? t.introFooterInstall : t.introFooterUninstall}</p>
             </div>
-            <div className="text-sm text-gray-500 mb-2 space-y-2 leading-relaxed">
-              <p>A foundation generator designed for AI-assisted development.</p>
-              <p>Equip your AI assistant (like Cursor or Windsurf) with a standardized persona (AGENTS.md), autonomous workflows, and an isolated Docker infrastructure from day one.</p>
-              <p>{actionType === 'install' ? 'Select your required modules below to export a production-ready project blueprint.' : 'Select the modules you wish to safely tear down and remove from the project.'}</p>
-            </div>
-          </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Step 1: Action Type (Install or Teardown)</h3>
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <button
-                  onClick={() => handleActionTypeChange('install')}
-                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 ${actionType === 'install'
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                    : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 hover:text-gray-900 focus:ring-blue-500/50'
-                    }`}
-                >
-                  <Download className="w-4 h-4" />
-                  Generate Setup Blueprint
-                </button>
-                <button
-                  onClick={() => handleActionTypeChange('uninstall')}
-                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 ${actionType === 'uninstall'
-                    ? 'bg-red-600 text-white shadow-md shadow-red-500/30'
-                    : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 hover:text-gray-900 focus:ring-red-500/50'
-                    }`}
-                >
-                  <AlertCircle className="w-4 h-4" />
-                  Generate Teardown Blueprint
-                </button>
+            <div className="pt-6 border-t border-slate-100">
+              <div className="flex items-center gap-2 mb-5">
+                <div className={`p-1.5 rounded-lg ${actionType === 'install' ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">{t.usageTitle}</h3>
+              </div>
+              <div className="space-y-5">
+                {t.usageSteps.map((text, i) => (
+                  <div key={i} className="flex gap-4 group">
+                    <div className={`flex-shrink-0 w-6 h-6 rounded-lg text-[11px] font-black flex items-center justify-center transition-all duration-300 ${actionType === 'install' ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' : 'bg-red-50 text-red-600 group-hover:bg-red-600 group-hover:text-white'}`}>
+                      {i + 1}
+                    </div>
+                    <p className="text-[13px] text-slate-600 leading-snug group-hover:text-slate-900 transition-colors pointer-events-none">
+                      {text}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
+          {/* Step 1: Action Type */}
+          <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{t.step1}</h3>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${actionType === 'install' ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>{t.step1Title}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => handleActionTypeChange('install')}
+                className={`group relative flex flex-col items-center justify-center gap-3 py-6 px-4 rounded-2xl font-bold text-xs transition-all duration-300 focus:outline-none ${actionType === 'install'
+                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 ring-4 ring-blue-50'
+                  : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-white hover:border-blue-200 hover:text-slate-600 hover:shadow-lg'
+                  }`}
+              >
+                <Download className={`w-5 h-5 transition-transform duration-300 ${actionType === 'install' ? 'scale-110' : 'opacity-50 group-hover:scale-110 group-hover:opacity-100'}`} />
+                {t.setupMode}
+              </button>
+              <button
+                onClick={() => handleActionTypeChange('uninstall')}
+                className={`group relative flex flex-col items-center justify-center gap-3 py-6 px-4 rounded-2xl font-bold text-xs transition-all duration-300 focus:outline-none ${actionType === 'uninstall'
+                  ? 'bg-red-600 text-white shadow-xl shadow-red-200 ring-4 ring-red-50'
+                  : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-white hover:border-red-200 hover:text-slate-600 hover:shadow-lg'
+                  }`}
+              >
+                <AlertCircle className={`w-5 h-5 transition-transform duration-300 ${actionType === 'uninstall' ? 'scale-110' : 'opacity-50 group-hover:scale-110 group-hover:opacity-100'}`} />
+                {t.teardownMode}
+              </button>
+            </div>
+          </div>
+
+          {/* Step 2: Deployment Scope */}
           {actionType === 'install' && (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-300">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Step 2: Deployment Scope</h3>
-              <div className="grid grid-cols-3 gap-3">
-                <div
-                  onClick={() => setDeploymentScope('local')}
-                  className={`cursor-pointer border rounded-lg p-4 flex flex-col items-center justify-center text-center transition-all ${deploymentScope === 'local' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
-                >
-                  <Monitor className={`w-6 h-6 mb-2 ${deploymentScope === 'local' ? 'text-blue-600' : 'text-gray-500'}`} />
-                  <span className="font-medium text-sm text-gray-900">Local Only</span>
-                  <span className="text-[10px] text-gray-500 mt-1">Docker on your laptop</span>
-                </div>
-
-                <div
-                  onClick={() => setDeploymentScope('server')}
-                  className={`cursor-pointer border rounded-lg p-4 flex flex-col items-center justify-center text-center transition-all ${deploymentScope === 'server' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
-                >
-                  <Globe className={`w-6 h-6 mb-2 ${deploymentScope === 'server' ? 'text-blue-600' : 'text-gray-500'}`} />
-                  <span className="font-medium text-sm text-gray-900">Public VPS</span>
-                  <span className="text-[10px] text-gray-500 mt-1">Caddy & Watchdog scripts</span>
-                </div>
-
-                <div
-                  onClick={() => setDeploymentScope('full')}
-                  className={`cursor-pointer border rounded-lg p-4 flex flex-col items-center justify-center text-center transition-all ${deploymentScope === 'full' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
-                >
-                  <Network className={`w-6 h-6 mb-2 ${deploymentScope === 'full' ? 'text-blue-600' : 'text-gray-500'}`} />
-                  <span className="font-medium text-sm text-gray-900">Full Stack</span>
-                  <span className="text-[10px] text-gray-500 mt-1">Local + Cloud Infra</span>
-                </div>
+            <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{t.step2}</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600">{t.step2Title}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { id: 'local', icon: <Monitor />, label: t.scopeLocal, sub: t.scopeLocalSub },
+                  { id: 'server', icon: <Globe />, label: t.scopeServer, sub: t.scopeServerSub },
+                  { id: 'full', icon: <Network />, label: t.scopeFull, sub: t.scopeFullSub }
+                ].map((scope) => (
+                  <div
+                    key={scope.id}
+                    onClick={() => setDeploymentScope(scope.id as any)}
+                    className={`group cursor-pointer border-2 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all duration-300 ${deploymentScope === scope.id ? 'border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-100' : 'border-slate-50 bg-slate-50 hover:border-slate-200 hover:bg-white hover:shadow-md'}`}
+                  >
+                    <div className={`mb-3 p-2 rounded-xl transition-colors ${deploymentScope === scope.id ? 'bg-blue-600 text-white' : 'bg-white text-slate-400 group-hover:text-blue-500 shadow-sm'}`}>
+                      {React.cloneElement(scope.icon as React.ReactElement<{ className?: string }>, { className: 'w-5 h-5' })}
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 leading-none">{scope.label}</span>
+                    <span className="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tight">{scope.sub}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="space-y-5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                {actionType === 'install' ? 'Step 3: Global Settings' : 'Step 2: Target Project Name'}
-              </h3>
+          {/* Step 3: Settings */}
+          <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{t.step3}</h3>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${actionType === 'install' ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>{t.step3Title}</span>
+            </div>
 
+            <div className="space-y-6">
+              {[
+                { name: 'projectName', label: t.projectName, icon: <FolderGit2 />, placeholder: t.projectNamePlaceholder, show: true, type: 'text' },
+                { name: 'userRole', label: t.userRole, icon: <UserCircle />, placeholder: t.userRolePlaceholder, show: actionType === 'install', type: 'chip' },
+                { name: 'aiRole', label: t.aiRole, icon: <BrainCircuit />, placeholder: t.aiRolePlaceholder, show: actionType === 'install', type: 'chip' },
+                { name: 'domain', label: t.domain, icon: <Link />, placeholder: t.domainPlaceholder, show: actionType === 'install' && (deploymentScope !== 'local'), type: 'text' }
+              ].filter(f => f.show).map((field) => (
+                <div key={field.name} className="relative group">
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 ml-1">{field.label}</label>
+                  {field.type === 'chip' ? (
+                    <ChipInput
+                      value={(config as any)[field.name]}
+                      onChange={(val) => handleConfigChange({ target: { name: field.name, value: val } } as any)}
+                      placeholder={field.placeholder!}
+                      icon={field.icon}
+                    />
+                  ) : (
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                        {React.cloneElement(field.icon as React.ReactElement<{ className?: string }>, { className: 'w-5 h-5' })}
+                      </div>
+                      <input
+                        type="text"
+                        name={field.name}
+                        value={(config as any)[field.name]}
+                        onChange={handleConfigChange}
+                        className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-[13px] font-medium text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 focus:bg-white transition-all outline-none placeholder:text-slate-300"
+                        placeholder={field.placeholder!}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Domain Selector (Phase 3) */}
+            {actionType === 'install' && (
               <div className="relative group">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">Project Name</label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-3 text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                    <FolderGit2 className="w-5 h-5" />
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 ml-1">{t.domainLabel}</label>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <Globe className="w-5 h-5" />
                   </div>
-                  <input
-                    type="text"
-                    name="projectName"
-                    value={config.projectName}
-                    onChange={handleConfigChange}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
-                    placeholder="e.g. AI-Memory-OS"
-                  />
+                  <select
+                    value={selectedDomain}
+                    onChange={(e) => {
+                      const newDomainId = e.target.value;
+                      const prevDomain = DOMAINS.find(d => d.id === selectedDomain);
+                      const newDomain = DOMAINS.find(d => d.id === newDomainId);
+
+                      setSelectedDomain(newDomainId);
+
+                      setSelectedModules(prev => {
+                        const next = { ...prev };
+
+                        // Step 1: Uncheck previous domain's recommended modules
+                        // (only if they're not required)
+                        if (prevDomain) {
+                          const newRecs = new Set(newDomain?.recommendedModules || []);
+                          prevDomain.recommendedModules.forEach(id => {
+                            const mod = MODULES.find(m => m.id === id);
+                            // Only uncheck if: not required AND not recommended by new domain
+                            if (mod && !mod.required && !newRecs.has(id)) {
+                              next[id] = false;
+                            }
+                          });
+                        }
+
+                        // Step 2: Check new domain's recommended modules
+                        if (newDomain) {
+                          newDomain.recommendedModules.forEach(id => { next[id] = true; });
+                        }
+
+                        return next;
+                      });
+                    }}
+                    className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-[13px] font-medium text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 focus:bg-white transition-all outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="">{t.domainGeneral}</option>
+                    {DOMAINS.map(d => (
+                      <option key={d.id} value={d.id}>{language === 'zh' ? d.nameZh : d.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
-
-              {actionType === 'install' && (
-                <div className="relative group animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">Author Name / AI Persona Target</label>
-                  <div className="relative flex items-center">
-                    <div className="absolute left-3 text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                      <UserCircle className="w-5 h-5" />
-                    </div>
-                    <input
-                      type="text"
-                      name="authorName"
-                      value={config.authorName}
-                      onChange={handleConfigChange}
-                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {actionType === 'install' && (deploymentScope === 'server' || deploymentScope === 'full') && (
-                <div className="relative group animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5 ml-1">Primary Domain (For Infra & Caddy)</label>
-                  <div className="relative flex items-center">
-                    <div className="absolute left-3 text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                      <Link className="w-5 h-5" />
-                    </div>
-                    <input
-                      type="text"
-                      name="domain"
-                      value={config.domain}
-                      onChange={handleConfigChange}
-                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all outline-none"
-                      placeholder="e.g. project.interaction.tw"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">
-              {actionType === 'install' ? 'Step 4: Module Selection' : 'Step 3: Select Modules to Teardown'}
-            </h3>
 
-            <div className="space-y-8">
+          {/* Step 4: Module Selection */}
+          <div className="bg-white p-8 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">{t.step4}</h3>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${actionType === 'install' ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>{t.step4Title}</span>
+            </div>
+
+            <div className="space-y-10">
               {Object.entries(categories)
                 .filter(([category]) => visibleCategoryList.includes(category))
                 .map(([category, mods]) => (
                   <div key={category}>
-                    <h4 className="text-sm font-semibold text-gray-800 mb-3 border-b pb-1">{category}</h4>
+                    <div className="flex items-center gap-3 mb-5">
+                      <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.15em]">{language === 'zh' ? mods[0].categoryZh : category}</h4>
+                      <div className="h-px bg-slate-100 flex-grow"></div>
+                    </div>
                     <div className="space-y-3">
                       {mods.map((mod) => {
                         const isNodeRequired = mod.required && actionType === 'install';
                         const isSelected = selectedModules[mod.id] || isNodeRequired;
-                        const cardBaseClass = `flex gap-3 p-3 rounded-lg border transition-colors ${isNodeRequired ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer'}`;
-                        const cardSelectedClass = actionType === 'install' ? 'border-blue-400 bg-blue-50' : 'border-red-400 bg-red-50';
-                        const cardUnselectedClass = 'border-gray-200 hover:border-gray-300';
-                        const cardClass = `${cardBaseClass} ${isSelected ? cardSelectedClass : cardUnselectedClass}`;
+                        const cardSelectedClass = actionType === 'install'
+                          ? 'border-blue-500 bg-blue-50/30'
+                          : 'border-red-500 bg-red-50/30';
 
                         return (
                           <div
                             key={mod.id}
                             onClick={() => toggleModule(mod.id, isNodeRequired)}
-                            className={cardClass}
+                            className={`group flex gap-4 p-4 rounded-2xl border-2 transition-all duration-300 ${isNodeRequired ? 'opacity-70 cursor-not-allowed border-slate-50 bg-slate-50' : isSelected ? `${cardSelectedClass} shadow-sm` : 'border-slate-50 bg-slate-50 hover:border-slate-200 hover:bg-white hover:shadow-md cursor-pointer'}`}
                           >
-                            <div className="mt-0.5">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleModule(mod.id, isNodeRequired)}
-                                className={`w-4 h-4 rounded border-gray-300 ${actionType === 'install' ? 'text-blue-600 focus:ring-blue-500' : 'text-red-600 focus:ring-red-500'}`}
-                                disabled={isNodeRequired}
-                              />
+                            <div className="mt-1">
+                              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? (actionType === 'install' ? 'bg-blue-600 border-blue-600 shadow-sm' : 'bg-red-600 border-red-600 shadow-sm') : 'border-slate-200 bg-white group-hover:border-slate-300'}`}>
+                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                                {mod.icon} {mod.name}
-                                {isNodeRequired && <span className="text-[10px] uppercase font-bold text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">Required</span>}
-                                {mod.required && actionType === 'uninstall' && <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">Core</span>}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">{mod.desc}</p>
+                            <div className="flex-grow">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className={`text-[13px] font-bold flex items-center gap-2 ${isSelected ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                  {React.cloneElement(mod.icon as React.ReactElement<{ className?: string }>, { className: `w-4 h-4 ${isSelected ? (actionType === 'install' ? 'text-blue-600' : 'text-red-600') : 'text-slate-400'}` })}
+                                  {language === 'zh' ? mod.nameZh : mod.name}
+                                </span>
+                                {isNodeRequired && <span className="text-[9px] font-black uppercase bg-blue-600 text-white px-2 py-0.5 rounded-md tracking-tighter shadow-sm shadow-blue-200">{t.required}</span>}
+                                {mod.required && actionType === 'uninstall' && <span className="text-[9px] font-black uppercase bg-slate-900 text-white px-2 py-0.5 rounded-md tracking-tighter">{t.core}</span>}
+                              </div>
+                              <p className="text-[11px] font-medium text-slate-400 leading-normal">{language === 'zh' ? mod.descZh : mod.desc}</p>
 
-                              {/* Rendering Prerequisites Warnings if the module is selected (Only in Install mode) */}
                               {mod.prerequisites && isSelected && actionType === 'install' && (
-                                <div className="mt-3 rounded-md bg-slate-50 border border-slate-200 overflow-hidden">
-                                  <div className="bg-slate-100/50 px-3 py-2 border-b border-slate-200 flex items-center gap-2">
-                                    <AlertCircle className="w-3.5 h-3.5 text-slate-500" />
-                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Action Required Before Execution</p>
+                                <div className="mt-4 rounded-xl bg-white/60 border border-blue-100/50 backdrop-blur-sm shadow-sm overflow-hidden">
+                                  <div className="bg-blue-50/50 px-3 py-1.5 border-b border-blue-100/50 flex items-center gap-2">
+                                    <AlertCircle className="w-3 h-3 text-blue-500" />
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-600/70">{t.actionRequired}</p>
                                   </div>
-                                  <ul className="divide-y divide-slate-100 bg-white">
-                                    {mod.prerequisites.map((req: string, idx: number) => (
-                                      <li key={idx} className="px-3 py-2.5 flex items-start gap-2.5 hover:bg-slate-50 transition-colors">
-                                        <div className="mt-1 flex-shrink-0">
-                                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500/80 ring-4 ring-blue-500/10"></div>
-                                        </div>
-                                        <span className="text-xs text-slate-700 font-medium leading-relaxed">{req}</span>
+                                  <ul className="py-2 px-1">
+                                    {(language === 'zh' && mod.prerequisitesZh ? mod.prerequisitesZh : mod.prerequisites).map((req: string, idx: number) => (
+                                      <li key={idx} className="px-3 py-1.5 flex items-start gap-2.5">
+                                        <div className="mt-1 flex-shrink-0 w-1 h-1 rounded-full bg-blue-400" />
+                                        <span className="text-[10px] text-slate-500 font-bold leading-tight">{req}</span>
                                       </li>
                                     ))}
                                   </ul>
@@ -652,20 +847,20 @@ function App() {
         </div>
 
         {/* Right Preview - Output */}
-        <div className="xl:col-span-7 flex flex-col xl:sticky xl:top-8 xl:h-[calc(100vh-8rem)]">
-          <div className="bg-gray-900 rounded-xl shadow-xl flex-grow flex flex-col overflow-hidden border border-gray-800">
-            <div className="flex bg-gray-800 px-4 py-3 items-center justify-between border-b border-gray-700">
+        <div className="xl:col-span-7 flex flex-col xl:sticky xl:top-12 xl:h-[calc(100vh-10rem)]">
+          <div className="bg-[#0f172a] rounded-[2rem] shadow-2xl flex-grow flex flex-col overflow-hidden border border-slate-800 ring-8 ring-slate-100/50 transition-all duration-500">
+            <div className="flex bg-[#1e293b] px-6 py-4 items-center justify-between border-b border-slate-800">
               <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
               </div>
-              <p className="text-xs font-mono text-gray-400">Blueprint Preview</p>
-              <div></div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{t.previewTitle}</p>
+              <div className="w-10"></div>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-grow text-gray-300 font-mono text-sm leading-relaxed whitespace-pre-wrap">
-              <div className="opacity-50"># This preview shows the folder structure that will be generated.</div>
+            <div className="p-8 overflow-y-auto flex-grow text-[#94a3b8] font-mono text-[13px] leading-relaxed whitespace-pre-wrap selection:bg-blue-500/30">
+              <div className="text-slate-600 mb-4 select-none italic text-xs">{t.previewDesc}</div>
 
               {actionType === 'uninstall' ? (
                 <>
@@ -677,18 +872,29 @@ function App() {
                   {`\n📁 ${config.projectName.replace(/\s+/g, '_')}/\n`}
                   {`├── 📄 SETUP.md\n`}
                   {`├── 📄 AGENTS.md\n`}
-                  {`├── 📁 .agents/\n│   └── 📁 workflows/\n│       ├── 📄 start.md\n│       └── 📄 end.md\n`}
+                  {`├── 📁 .agents/\n│   ${(isModuleActive('context_bundler') || isModuleActive('response_cache')) ? '├──' : '└──'} 📁 workflows/\n│   ${(isModuleActive('context_bundler') || isModuleActive('response_cache')) ? '│' : ' '}   ├── 📄 start.md\n│   ${(isModuleActive('context_bundler') || isModuleActive('response_cache')) ? '│' : ' '}   └── 📄 end.md\n`}
+                  {isModuleActive('context_bundler') && `│   ${isModuleActive('response_cache') ? '├──' : '└──'} 📁 context/\n│   ${isModuleActive('response_cache') ? '│' : ' '}   └── 📄 .gitkeep\n`}
+                  {isModuleActive('response_cache') && `│   ├── 📁 cache/\n│   │   └── 📄 .gitkeep\n`}
+                  {`│   └── 📄 module_registry.json\n`}
+                  {`├── 📁 docs/\n│   ├── 📄 USER_GUIDE_ZH.md\n│   ├── 📄 USER_GUIDE_EN.md\n`}
+                  {selectedDomain && `│   └── 📄 DOMAIN_CONTEXT.md\n`}
+
+                  {isModuleActive('edu_submission') && `├── 📁 homework_submission/\n│   └── 📄 README.md\n`}
 
                   {isModuleActive('ci_git_hook') && `├── 📁 .git/hooks/\n│   └── 📄 pre-push\n`}
 
-                  {(isModuleActive('mem_lancedb') || isModuleActive('infra_watchdog') || isModuleActive('ci_testing_matrix') || isModuleActive('infra_iac') || isModuleActive('mem_digest') || isModuleActive('mem_cloud')) && `├── 📁 scripts/\n`}
+                  {`├── 📁 scripts/\n`}
+                  {isModuleActive('edu_submission') && `│   ├── 📄 submit_homework.py\n`}
                   {isModuleActive('mem_lancedb') && `│   ├── 📄 ingest.py\n│   ├── 📄 query.py\n`}
+                  {isModuleActive('context_bundler') && `│   ├── 📄 bundle_context.py\n`}
+                  {isModuleActive('response_cache') && `│   ├── 📄 cache.py\n`}
                   {isModuleActive('mem_cloud') && `│   ├── 📄 llama_drive_indexer.py\n`}
-                  {(isModuleActive('infra_watchdog') || isModuleActive('ci_testing_matrix') || isModuleActive('infra_iac') || isModuleActive('mem_digest')) && `│   └── 📁 system/\n`}
+                  {`│   └── 📁 system/\n`}
                   {isModuleActive('infra_watchdog') && `│       ├── 📄 watchdog.sh\n`}
                   {isModuleActive('ci_testing_matrix') && `│       ├── 📄 test_matrix.sh\n`}
                   {isModuleActive('infra_iac') && `│       ├── 📄 deploy.sh\n`}
-                  {isModuleActive('mem_digest') && `│       └── 📄 conversation_digest.py\n`}
+                  {isModuleActive('mem_digest') && `│       ├── 📄 conversation_digest.py\n`}
+                  {`│       └── 📄 health_check.py\n`}
 
                   {(isModuleActive('ci_python_tools') || isModuleActive('ci_testing_matrix')) && `├── 📁 tests/\n`}
                   {isModuleActive('ci_python_tools') && `│   └── 📄 test_basic.py\n`}
@@ -697,29 +903,46 @@ function App() {
 
                   {isModuleActive('infra_gateway') && `├── 📁 config/\n│   └── 📁 caddy/\n│       └── 📄 Caddyfile\n`}
                   {isModuleActive('infra_iac') && `├── 📁 ansible/\n│   ├── 📄 inventory.ini\n│   └── 📁 playbooks/\n│       └── 📄 update_scripts.yml\n`}
-                  {isModuleActive('env_academic') && `├── 📄 Dockerfile\n`}
+                  {`├── 📄 Dockerfile\n`}
                   {`├── 📄 docker-compose.yml\n`}
                 </>
               )}
             </div>
 
-            <div className="p-4 bg-gray-800 border-t border-gray-700">
+            <div className="p-6 bg-[#1e293b]/50 backdrop-blur-md border-t border-slate-800">
               <button
                 onClick={generateZip}
-                className={`w-full text-white font-semibold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all ${actionType === 'uninstall' ? 'bg-red-600 hover:bg-red-500' : 'bg-blue-600 hover:bg-blue-500'
+                className={`w-full text-white font-black uppercase tracking-[0.1em] text-xs py-4 px-6 rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all duration-300 ${actionType === 'uninstall' ? 'bg-red-600 hover:bg-red-500 shadow-red-500/20' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/20'
                   }`}
               >
                 {actionType === 'uninstall' ? <AlertCircle className="w-5 h-5" /> : <Download className="w-5 h-5" />}
-                {actionType === 'uninstall' ? 'Download Teardown ZIP' : 'Download Blueprint ZIP'}
+                {actionType === 'uninstall' ? t.exportTeardown : t.exportSetup}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer Declaration */}
-      <footer className="mt-12 text-center text-sm font-medium text-gray-400 w-full max-w-6xl tracking-wide">
-        &copy; {new Date().getFullYear()} Interaction Lab &bull; Designed by <span className="text-gray-500">Chiang, Chenwei</span> &bull; <a href="https://project.interaction.tw/" className="hover:text-blue-500 transition-colors">project.interaction.tw</a>
+      <footer className="mt-20 mb-12 text-center w-full max-w-6xl">
+        <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent w-full mb-8"></div>
+        <p className="text-xs font-bold text-slate-400 tracking-widest uppercase mb-4">
+          &copy; {new Date().getFullYear()} Interaction Lab &bull; {t.footerDesign} <span className="text-slate-900 font-black">Chiang, Chenwei</span>
+        </p>
+        <div className="flex justify-center flex-wrap gap-x-6 gap-y-3 mb-6">
+          {[
+            { label: t.footerInfra, val: t.academicRes },
+            { label: t.footerManagement, val: t.aiKnowledge },
+            { label: t.footerDeployment, val: 'project.interaction.tw' }
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{item.label}</span>
+              <span className="text-[10px] font-bold text-slate-900">{item.val}</span>
+            </div>
+          ))}
+        </div>
+        <div className="text-[10px] text-slate-400/80 font-medium tracking-widest uppercase">
+          Last Updated &bull; 2026-03-08
+        </div>
       </footer>
     </div>
   );
